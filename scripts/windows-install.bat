@@ -3,6 +3,8 @@ REM DeerFlow Windows one-click install. ASCII-only for cmd.exe (no UTF-8 BOM).
 REM Default: China-friendly mirrors for PyPI, Node MSI, npm/pnpm (no VPN).
 REM To force official sites only:  set DEERFLOW_USE_OFFICIAL=1  then run this script.
 REM Pandoc: China mode uses default Aliyun OSS ZIP ^(below^). Override with DEERFLOW_PANDOC_ZIP_URL / DEERFLOW_PANDOC_MSI_URL ^(full HTTPS^).
+REM UV: override install script URL via DEERFLOW_UV_INSTALL_SCRIPT_URL; optional wheel URL via DEERFLOW_UV_WHEEL_URL.
+REM UV portable ZIP fallback: DEERFLOW_UV_ZIP_URL ^(default uses official GitHub release zip^).
 REM Official mode ^(DEERFLOW_USE_OFFICIAL=1^): no OSS default; set URLs yourself if you want a mirror.
 REM Version in OSS path must match PANDOC_VER ^(MSI optional, ZIP for portable no-admin^).
 setlocal enabledelayedexpansion
@@ -13,6 +15,12 @@ if not exist "!DF_PWSH!" set "DF_PWSH=%SystemRoot%\SysWOW64\WindowsPowerShell\v1
 
 set "DEERFLOW_CN=1"
 if /i "!DEERFLOW_USE_OFFICIAL!"=="1" set "DEERFLOW_CN=0"
+if not defined DEERFLOW_UV_INSTALL_SCRIPT_URL set "DEERFLOW_UV_INSTALL_SCRIPT_URL=https://astral.sh/uv/install.ps1"
+if "!DEERFLOW_CN!"=="1" (
+    if not defined DEERFLOW_UV_ZIP_URL set "DEERFLOW_UV_ZIP_URL=https://experimentexam.oss-cn-beijing.aliyuncs.com/%%E6%%A0%%87%%E8%%80%%83/tools/uv-x86_64-pc-windows-msvc.zip"
+) else (
+    if not defined DEERFLOW_UV_ZIP_URL set "DEERFLOW_UV_ZIP_URL=https://github.com/astral-sh/uv/releases/download/0.11.6/uv-x86_64-pc-windows-msvc.zip"
+)
 
 REM Pandoc portable ZIP default ^(China^): experimentexam OSS; %% encodes as %% in .bat so URL keeps %%E6%%...
 if "!DEERFLOW_CN!"=="1" (
@@ -47,7 +55,7 @@ echo -- Step 1: uv ^(Python toolchain^) --
 echo.
 
 where uv >nul 2>&1
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     echo   Installing uv ...
     set "UV_INSTALLED=0"
     if "!DEERFLOW_CN!"=="1" (
@@ -58,20 +66,87 @@ if %errorlevel% neq 0 (
         )
     )
     if "!UV_INSTALLED!"=="0" (
-        "%DF_PWSH%" -ExecutionPolicy ByPass -NoProfile -Command "irm https://astral.sh/uv/install.ps1 | iex" >nul 2>&1
+        "%DF_PWSH%" -ExecutionPolicy ByPass -NoProfile -Command "irm !DEERFLOW_UV_INSTALL_SCRIPT_URL! | iex" >nul 2>&1
     )
     set "PATH=%USERPROFILE%\.local\bin;%USERPROFILE%\.cargo\bin;!PATH!"
     where uv >nul 2>&1
-    if %errorlevel% neq 0 (
+    if !errorlevel! neq 0 (
         where python >nul 2>&1
         if !errorlevel! equ 0 (
-            echo   Trying pip install uv ^(Aliyun PyPI^) ...
-            python -m pip install -U uv -i https://mirrors.aliyun.com/pypi/simple/ --quiet
+            echo   Trying pip install uv ...
+            set "UV_PIP_INDEX_ARG="
+            if defined UV_INDEX_URL set "UV_PIP_INDEX_ARG=-i !UV_INDEX_URL!"
+            python -m pip --version >nul 2>&1
+            if !errorlevel! equ 0 (
+                if defined DEERFLOW_UV_WHEEL_URL (
+                    echo   Trying uv wheel URL ...
+                    python -m pip install -U "!DEERFLOW_UV_WHEEL_URL!"
+                )
+                if !errorlevel! neq 0 (
+                    python -m pip install -U uv !UV_PIP_INDEX_ARG!
+                )
+
+                REM Some Python installs put uv.exe in script directories not on PATH.
+                for /f "tokens=*" %%p in ('python -c "import site; print(site.USER_BASE)" 2^>nul') do set "PY_USER_BASE=%%p"
+                if defined PY_USER_BASE set "PATH=!PY_USER_BASE!\Scripts;!PATH!"
+                for /f "tokens=*" %%p in ('python -c "import sysconfig; print(sysconfig.get_path(\"scripts\"))" 2^>nul') do set "PY_SCRIPTS_DIR=%%p"
+                if defined PY_SCRIPTS_DIR set "PATH=!PY_SCRIPTS_DIR!;!PATH!"
+
+                where uv >nul 2>&1
+                if !errorlevel! neq 0 (
+                    REM If module is installed but uv.exe is still not resolvable, create a shim.
+                    python -m uv --version >nul 2>&1
+                    if !errorlevel! equ 0 (
+                        set "UV_SHIM_DIR=%TEMP%\deerflow-uv-shim"
+                        if not exist "!UV_SHIM_DIR!" mkdir "!UV_SHIM_DIR!" >nul 2>&1
+                        (
+                            echo @echo off
+                            echo python -m uv %%*
+                        ) > "!UV_SHIM_DIR!\uv.cmd"
+                        set "PATH=!UV_SHIM_DIR!;!PATH!"
+                    )
+                )
+            ) else (
+                echo   [WARN] python exists but pip is unavailable ^(possibly Windows Store alias^).
+            )
         )
     )
     where uv >nul 2>&1
-    if %errorlevel% neq 0 (
+    if !errorlevel! neq 0 (
+        echo   Trying portable uv ZIP ...
+        echo   UV ZIP URL: !DEERFLOW_UV_ZIP_URL!
+        set "UV_ZIP=%TEMP%\deerflow-uv-x64.zip"
+        set "UV_ZIP_LOG=%TEMP%\deerflow-uv-zip-install.log"
+        if exist "!UV_ZIP_LOG!" del /f /q "!UV_ZIP_LOG!" >nul 2>&1
+        if exist "!UV_ZIP!" del /f /q "!UV_ZIP!" >nul 2>&1
+        "%DF_PWSH%" -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $u=$env:DEERFLOW_UV_ZIP_URL; $o=Join-Path $env:TEMP 'deerflow-uv-x64.zip'; $ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri $u -OutFile $o -UseBasicParsing; if((Get-Item -LiteralPath $o).Length -lt 1000000){ throw 'Downloaded uv ZIP is too small.' }" >nul 2>"!UV_ZIP_LOG!"
+        if exist "!UV_ZIP!" (
+            "%DF_PWSH%" -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $z=Join-Path $env:TEMP 'deerflow-uv-x64.zip'; $stage=Join-Path $env:TEMP 'deerflow-uv-unzip'; $dest=Join-Path $env:USERPROFILE '.local\bin'; if(Test-Path $stage){Remove-Item -Recurse -Force $stage}; New-Item -ItemType Directory -Force -Path $dest | Out-Null; Expand-Archive -LiteralPath $z -DestinationPath $stage -Force; $uv=Get-ChildItem -Path $stage -Recurse -Filter uv.exe -ErrorAction SilentlyContinue | Select-Object -First 1; if(-not $uv){ throw 'uv.exe not found in ZIP.' }; Copy-Item -Force -LiteralPath $uv.FullName -Destination (Join-Path $dest 'uv.exe'); $uvx=Get-ChildItem -Path $stage -Recurse -Filter uvx.exe -ErrorAction SilentlyContinue | Select-Object -First 1; if($uvx){ Copy-Item -Force -LiteralPath $uvx.FullName -Destination (Join-Path $dest 'uvx.exe') }" >nul 2>>"!UV_ZIP_LOG!"
+            if !errorlevel! equ 0 (
+                set "PATH=%USERPROFILE%\.local\bin;!PATH!"
+                del /f /q "!UV_ZIP!" >nul 2>&1
+                if exist "!UV_ZIP_LOG!" del /f /q "!UV_ZIP_LOG!" >nul 2>&1
+            ) else (
+                echo   [WARN] Portable uv ZIP install failed. See log: !UV_ZIP_LOG!
+                if exist "!UV_ZIP_LOG!" type "!UV_ZIP_LOG!"
+            )
+        ) else (
+            echo   [WARN] Portable uv ZIP download failed from: !DEERFLOW_UV_ZIP_URL!
+            if exist "!UV_ZIP_LOG!" type "!UV_ZIP_LOG!"
+        )
+    )
+    where uv >nul 2>&1
+    if !errorlevel! neq 0 (
         echo   [ERROR] uv install failed. Check network or use VPN once for first install.
+        echo   [HINT] You can host UV files on your CDN and retry:
+        echo          1^) Install script source: https://astral.sh/uv/install.ps1
+        echo             set DEERFLOW_UV_INSTALL_SCRIPT_URL=https://your-cdn.example.com/uv/install.ps1
+        echo          2^) Portable ZIP fallback URL:
+        echo             set DEERFLOW_UV_ZIP_URL=https://your-cdn.example.com/uv/uv-x86_64-pc-windows-msvc.zip
+        echo          3^) Optional direct wheel URL:
+        echo             set DEERFLOW_UV_WHEEL_URL=https://your-cdn.example.com/uv/uv-^<version^>-py3-none-any.whl
+        echo          4^) Optional PyPI mirror:
+        echo             set UV_INDEX_URL=https://your-cdn.example.com/pypi/simple/
         pause
         exit /b 1
     )
@@ -86,21 +161,21 @@ echo.
 
 echo   Checking Python ...
 uv python install 3.12 >nul 2>&1
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     if "!DEERFLOW_CN!"=="1" (
         echo   [WARN] Retrying with USTC github-release mirror ...
         set "UV_PYTHON_INSTALL_MIRROR=https://mirrors.ustc.edu.cn/github-release/astral-sh/python-build-standalone/releases/download"
         uv python install 3.12 >nul 2>&1
     )
 )
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     if "!DEERFLOW_CN!"=="1" (
         echo   [WARN] Retrying without mirror ^(direct GitHub; may need VPN^) ...
         set "UV_PYTHON_INSTALL_MIRROR="
         uv python install 3.12 >nul 2>&1
     )
 )
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     echo   [ERROR] Python 3.12 install failed. Try: set DEERFLOW_USE_OFFICIAL=1 or set UV_PYTHON_INSTALL_MIRROR= manually.
     pause
     exit /b 1
@@ -115,7 +190,7 @@ echo.
 
 set NODE_OK=0
 where node >nul 2>&1
-if %errorlevel% equ 0 (
+if !errorlevel! equ 0 (
     for /f "tokens=1 delims=." %%m in ('node -v 2^>^&1') do (
         set "NODE_VER=%%m"
         set "NODE_VER=!NODE_VER:v=!"
@@ -129,9 +204,9 @@ if %errorlevel% equ 0 (
 if !NODE_OK! equ 0 (
     echo   Installing Node.js 22 ...
     where winget >nul 2>&1
-    if %errorlevel% equ 0 (
+    if !errorlevel! equ 0 (
         winget install -e --id OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements --silent >nul 2>&1
-        if %errorlevel% equ 0 (
+        if !errorlevel! equ 0 (
             echo   Node.js installed via winget
             for /f "tokens=2,*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul') do set "SYS_PATH=%%b"
             for /f "tokens=2,*" %%a in ('reg query "HKCU\Environment" /v Path 2^>nul') do set "USR_PATH=%%b"
@@ -182,7 +257,7 @@ echo -- Step 4: pnpm --
 echo.
 
 where pnpm >nul 2>&1
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     echo   Installing pnpm ...
     where node >nul 2>&1
     if !errorlevel! equ 0 (
@@ -200,7 +275,7 @@ if %errorlevel% neq 0 (
         winget install -e --id pnpm.pnpm --accept-package-agreements --accept-source-agreements --silent >nul 2>&1
     )
     where pnpm >nul 2>&1
-    if %errorlevel% neq 0 (
+    if !errorlevel! neq 0 (
         echo   [ERROR] pnpm install failed.
         pause
         exit /b 1
@@ -225,7 +300,7 @@ echo.
 echo   [1/3] Backend ^(uv sync^) ...
 cd /d "%PROJECT_DIR%\backend"
 uv sync --quiet
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     echo   [ERROR] Backend deps failed
     pause
     exit /b 1
@@ -236,7 +311,7 @@ cd /d "%PROJECT_DIR%"
 echo   [2/3] Frontend ^(pnpm install^) ...
 cd /d "%PROJECT_DIR%\frontend"
 call pnpm install --silent
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     echo   [ERROR] Frontend deps failed
     pause
     exit /b 1
@@ -253,7 +328,7 @@ set "PANDOC_ZIP=%TEMP%\deerflow-pandoc-%PANDOC_VER%.zip"
 set "PANDOC_DIR=%USERPROFILE%\.local\pandoc"
 
 where pandoc >nul 2>&1
-if %errorlevel% equ 0 (
+if !errorlevel! equ 0 (
     echo         pandoc already on PATH
     goto :pandoc_done
 )
@@ -265,13 +340,13 @@ if "!DEERFLOW_CN!"=="1" if defined DEERFLOW_PANDOC_ZIP_URL goto :pandoc_try_zip
 
 REM Official mode ^(or no CDN ZIP^): try winget first, then fall through to MSI/ZIP download.
 where winget >nul 2>&1
-if %errorlevel% equ 0 (
+if !errorlevel! equ 0 (
     echo         Trying winget ^(JohnMacFarlane.Pandoc^) ...
     winget install -e --id JohnMacFarlane.Pandoc --accept-package-agreements --accept-source-agreements --silent >nul 2>&1
     call :deerflow_refresh_path
 )
 where pandoc >nul 2>&1
-if %errorlevel% equ 0 goto :pandoc_ok
+if !errorlevel! equ 0 goto :pandoc_ok
 
 echo         winget did not leave pandoc on PATH, trying MSI download ...
 
@@ -291,7 +366,7 @@ del /f /q "%PANDOC_MSI%" >nul 2>&1
 call :deerflow_refresh_path
 timeout /t 2 /nobreak >nul
 where pandoc >nul 2>&1
-if %errorlevel% equ 0 goto :pandoc_ok
+if !errorlevel! equ 0 goto :pandoc_ok
 
 :pandoc_try_zip
 echo         Downloading portable pandoc ZIP ...
@@ -306,7 +381,7 @@ if not exist "%PANDOC_ZIP%" (
     goto :pandoc_fail
 )
 "%DF_PWSH%" -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $v='%PANDOC_VER%'; $z=Join-Path $env:TEMP ('deerflow-pandoc-'+$v+'.zip'); $dest=Join-Path $env:USERPROFILE '.local\pandoc'; $stage=Join-Path $env:TEMP 'deerflow-pandoc-unz'; if(Test-Path $stage){Remove-Item -Recurse -Force $stage}; New-Item -ItemType Directory -Force -Path $dest | Out-Null; Expand-Archive -LiteralPath $z -DestinationPath $stage -Force; $exe=Get-ChildItem -Path $stage -Recurse -Filter pandoc.exe -ErrorAction SilentlyContinue | Select-Object -First 1; if(-not $exe){ exit 1 }; $src=$exe.DirectoryName; robocopy $src $dest /E /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null; if($LASTEXITCODE -ge 8){ exit 1 }; $cur=[Environment]::GetEnvironmentVariable('Path','User'); if($cur -notlike ('*'+$dest+'*')){ [Environment]::SetEnvironmentVariable('Path', $dest+';'+$cur, 'User') }"
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     echo         [WARN] pandoc portable install failed.
     del /f /q "%PANDOC_ZIP%" >nul 2>&1
     goto :pandoc_fail
@@ -315,7 +390,7 @@ del /f /q "%PANDOC_ZIP%" >nul 2>&1
 call :deerflow_refresh_path
 set "PATH=!PANDOC_DIR!;%PATH%"
 where pandoc >nul 2>&1
-if %errorlevel% equ 0 goto :pandoc_ok
+if !errorlevel! equ 0 goto :pandoc_ok
 
 :pandoc_fail
 echo         [WARN] pandoc not installed. Close this window, open a new cmd, re-run install, or install Pandoc manually.
@@ -331,7 +406,7 @@ echo         pandoc OK ^(restart terminal if --version fails here^)
 
 cd /d "%PROJECT_DIR%\backend"
 uv pip install --quiet --python .venv\Scripts\python.exe openpyxl defusedxml lxml pypdf pdfplumber Pillow requests python-pptx duckdb markdown fpdf2 2>nul
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     uv pip install --quiet openpyxl defusedxml lxml pypdf pdfplumber Pillow requests python-pptx duckdb markdown fpdf2 2>nul
 )
 echo         Python extras OK
