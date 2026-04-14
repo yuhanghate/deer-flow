@@ -6,6 +6,7 @@ from langchain_core.runnables import RunnableConfig
 
 from deerflow.agents.lead_agent.prompt import apply_prompt_template
 from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
+from deerflow.agents.middlewares.internal_reference_redaction_middleware import InternalReferenceRedactionMiddleware
 from deerflow.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
 from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
 from deerflow.agents.middlewares.subagent_limit_middleware import SubagentLimitMiddleware
@@ -260,6 +261,8 @@ def _build_middlewares(config: RunnableConfig, model_name: str | None, agent_nam
 
     # LoopDetectionMiddleware — detect and break repetitive tool call loops
     middlewares.append(LoopDetectionMiddleware())
+    # Redact internal skill sample references from assistant-visible outputs
+    middlewares.append(InternalReferenceRedactionMiddleware())
 
     # Inject custom middlewares before ClarificationMiddleware
     if custom_middlewares:

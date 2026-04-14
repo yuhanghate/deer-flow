@@ -37,7 +37,6 @@ coverage.xml
 coverage/
 .deer-flow/
 .claude/
-skills/custom/*
 logs/
 log/
 
@@ -57,3 +56,4 @@ config.yaml.bak
 .playwright-mcp
 .gstack/
 .worktrees
+/pyproject.toml
