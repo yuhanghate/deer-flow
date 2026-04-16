@@ -66,6 +66,29 @@ for arg in "$@"; do
     esac
 done
 
+# ── Ports ────────────────────────────────────────────────────────────────────
+# `PORT` is reserved for nginx public entrypoint to align with docker usage.
+# Frontend/Gateway/LangGraph use their dedicated vars to avoid accidental clashes.
+LANGGRAPH_PORT="${LANGGRAPH_PORT:-2024}"
+GATEWAY_PORT="${GATEWAY_PORT:-8001}"
+FRONTEND_PORT="${FRONTEND_PORT:-3000}"
+NGINX_PORT="${PORT:-2026}"
+
+# Render a runtime nginx config so local `PORT=xxxx make dev` works.
+NGINX_CONFIG_TEMPLATE="$REPO_ROOT/docker/nginx/nginx.local.conf"
+NGINX_CONFIG_RENDERED="$REPO_ROOT/temp/nginx.local.runtime.conf"
+
+render_nginx_local_config() {
+    mkdir -p "$REPO_ROOT/temp"
+    sed \
+        -e "s/server 127.0.0.1:8001;/server 127.0.0.1:${GATEWAY_PORT};/" \
+        -e "s/server 127.0.0.1:2024;/server 127.0.0.1:${LANGGRAPH_PORT};/" \
+        -e "s/server 127.0.0.1:3000;/server 127.0.0.1:${FRONTEND_PORT};/" \
+        -e "s/listen 2026;/listen ${NGINX_PORT};/" \
+        -e "s/listen \[::\]:2026;/listen [::]:${NGINX_PORT};/" \
+        "$NGINX_CONFIG_TEMPLATE" > "$NGINX_CONFIG_RENDERED"
+}
+
 # ── Stop helper ──────────────────────────────────────────────────────────────
 
 _kill_port() {
@@ -84,13 +107,18 @@ stop_all() {
     pkill -f "next dev" 2>/dev/null || true
     pkill -f "next start" 2>/dev/null || true
     pkill -f "next-server" 2>/dev/null || true
-    nginx -c "$REPO_ROOT/docker/nginx/nginx.local.conf" -p "$REPO_ROOT" -s quit 2>/dev/null || true
+    local nginx_conf="$NGINX_CONFIG_RENDERED"
+    if [ ! -f "$nginx_conf" ]; then
+        nginx_conf="$NGINX_CONFIG_TEMPLATE"
+    fi
+    nginx -c "$nginx_conf" -p "$REPO_ROOT" -s quit 2>/dev/null || true
     sleep 1
     pkill -9 nginx 2>/dev/null || true
     # Force-kill any survivors still holding the service ports
-    _kill_port 2024
-    _kill_port 8001
-    _kill_port 3000
+    _kill_port "$LANGGRAPH_PORT"
+    _kill_port "$GATEWAY_PORT"
+    _kill_port "$FRONTEND_PORT"
+    _kill_port "$NGINX_PORT"
     ./scripts/cleanup-containers.sh deer-flow-sandbox 2>/dev/null || true
     echo "✓ All services stopped"
 }
@@ -132,7 +160,7 @@ fi
 
 # Frontend command
 if $DEV_MODE; then
-    FRONTEND_CMD="pnpm run dev"
+    FRONTEND_CMD="PORT=$FRONTEND_PORT pnpm run dev"
 else
     if command -v python3 >/dev/null 2>&1; then
         PYTHON_BIN="python3"
@@ -142,7 +170,7 @@ else
         echo "Python is required to generate BETTER_AUTH_SECRET."
         exit 1
     fi
-    FRONTEND_CMD="env BETTER_AUTH_SECRET=$($PYTHON_BIN -c 'import secrets; print(secrets.token_hex(16))') pnpm run preview"
+    FRONTEND_CMD="env PORT=$FRONTEND_PORT BETTER_AUTH_SECRET=$($PYTHON_BIN -c 'import secrets; print(secrets.token_hex(16))') pnpm run preview"
 fi
 
 # Extra flags for uvicorn/langgraph
@@ -210,6 +238,7 @@ sync_frontend_env() {
 }
 
 sync_frontend_env
+render_nginx_local_config
 
 # ── Banner ───────────────────────────────────────────────────────────────────
 
@@ -222,11 +251,11 @@ echo "  Mode: $MODE_LABEL"
 echo ""
 echo "  Services:"
 if ! $GATEWAY_MODE; then
-    echo "    LangGraph   → localhost:2024  (agent runtime)"
+    echo "    LangGraph   → localhost:$LANGGRAPH_PORT  (agent runtime)"
 fi
-echo "    Gateway     → localhost:8001  (REST API$(if $GATEWAY_MODE; then echo " + agent runtime"; fi))"
-echo "    Frontend    → localhost:3000  (Next.js)"
-echo "    Nginx       → localhost:2026  (reverse proxy)"
+echo "    Gateway     → localhost:$GATEWAY_PORT  (REST API$(if $GATEWAY_MODE; then echo " + agent runtime"; fi))"
+echo "    Frontend    → localhost:$FRONTEND_PORT  (Next.js)"
+echo "    Nginx       → localhost:$NGINX_PORT  (reverse proxy)"
 echo ""
 
 # ── Cleanup handler ──────────────────────────────────────────────────────────
@@ -279,26 +308,26 @@ if ! $GATEWAY_MODE; then
         LANGGRAPH_ALLOW_BLOCKING_FLAG="--allow-blocking"
     fi
     run_service "LangGraph" \
-        "cd backend && NO_COLOR=1 uv run langgraph dev --no-browser $LANGGRAPH_ALLOW_BLOCKING_FLAG --n-jobs-per-worker $LANGGRAPH_JOBS_PER_WORKER --server-log-level $LANGGRAPH_LOG_LEVEL $LANGGRAPH_EXTRA_FLAGS > ../logs/langgraph.log 2>&1" \
-        2024 60
+        "cd backend && NO_COLOR=1 uv run langgraph dev --no-browser --port $LANGGRAPH_PORT $LANGGRAPH_ALLOW_BLOCKING_FLAG --n-jobs-per-worker $LANGGRAPH_JOBS_PER_WORKER --server-log-level $LANGGRAPH_LOG_LEVEL $LANGGRAPH_EXTRA_FLAGS > ../logs/langgraph.log 2>&1" \
+        "$LANGGRAPH_PORT" 60
 else
     echo "⏩ Skipping LangGraph (Gateway mode — runtime embedded in Gateway)"
 fi
 
 # 2. Gateway API
 run_service "Gateway" \
-    "cd backend && PYTHONPATH=. uv run uvicorn app.gateway.app:app --host 0.0.0.0 --port 8001 $GATEWAY_EXTRA_FLAGS > ../logs/gateway.log 2>&1" \
-    8001 30
+    "cd backend && PYTHONPATH=. uv run uvicorn app.gateway.app:app --host 0.0.0.0 --port $GATEWAY_PORT $GATEWAY_EXTRA_FLAGS > ../logs/gateway.log 2>&1" \
+    "$GATEWAY_PORT" 30
 
 # 3. Frontend
 run_service "Frontend" \
     "cd frontend && $FRONTEND_CMD > ../logs/frontend.log 2>&1" \
-    3000 120
+    "$FRONTEND_PORT" 120
 
 # 4. Nginx
 run_service "Nginx" \
-    "nginx -g 'daemon off;' -c '$REPO_ROOT/docker/nginx/nginx.local.conf' -p '$REPO_ROOT' > logs/nginx.log 2>&1" \
-    2026 10
+    "nginx -g 'daemon off;' -c '$NGINX_CONFIG_RENDERED' -p '$REPO_ROOT' > logs/nginx.log 2>&1" \
+    "$NGINX_PORT" 10
 
 # ── Ready ────────────────────────────────────────────────────────────────────
 
@@ -307,16 +336,16 @@ echo "=========================================="
 echo "  ✓ DeerFlow is running!  [$MODE_LABEL]"
 echo "=========================================="
 echo ""
-echo "  🌐 http://localhost:2026"
+echo "  🌐 http://localhost:$NGINX_PORT"
 echo ""
 if $GATEWAY_MODE; then
     echo "  Routing: Frontend → Nginx → Gateway (embedded runtime)"
     echo "  API:     /api/langgraph-compat/*  →  Gateway agent runtime"
 else
     echo "  Routing: Frontend → Nginx → LangGraph + Gateway"
-    echo "  API:     /api/langgraph/*  →  LangGraph server (2024)"
+    echo "  API:     /api/langgraph/*  →  LangGraph server ($LANGGRAPH_PORT)"
 fi
-echo "           /api/*              →  Gateway REST API (8001)"
+echo "           /api/*              →  Gateway REST API ($GATEWAY_PORT)"
 echo ""
 echo "  📋 Logs: logs/{langgraph,gateway,frontend,nginx}.log"
 echo ""
