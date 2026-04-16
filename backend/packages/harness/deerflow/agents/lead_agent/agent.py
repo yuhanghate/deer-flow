@@ -6,7 +6,6 @@ from langchain_core.runnables import RunnableConfig
 
 from deerflow.agents.lead_agent.prompt import apply_prompt_template
 from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
-from deerflow.agents.middlewares.internal_reference_redaction_middleware import InternalReferenceRedactionMiddleware
 from deerflow.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
 from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
 from deerflow.agents.middlewares.subagent_limit_middleware import SubagentLimitMiddleware
@@ -23,6 +22,10 @@ from deerflow.models import create_chat_model
 
 logger = logging.getLogger(__name__)
 
+try:
+    from deerflow.agents.middlewares.internal_reference_redaction_middleware import InternalReferenceRedactionMiddleware
+except ModuleNotFoundError:
+    InternalReferenceRedactionMiddleware = None
 
 def _resolve_model_name(requested_model_name: str | None = None) -> str:
     """Resolve a runtime model name safely, falling back to default if invalid. Returns None if no models are configured."""
@@ -262,7 +265,10 @@ def _build_middlewares(config: RunnableConfig, model_name: str | None, agent_nam
     # LoopDetectionMiddleware — detect and break repetitive tool call loops
     middlewares.append(LoopDetectionMiddleware())
     # Redact internal skill sample references from assistant-visible outputs
-    middlewares.append(InternalReferenceRedactionMiddleware())
+    if InternalReferenceRedactionMiddleware is not None:
+        middlewares.append(InternalReferenceRedactionMiddleware())
+    else:
+        logger.warning("InternalReferenceRedactionMiddleware unavailable; skipping redaction middleware.")
 
     # Inject custom middlewares before ClarificationMiddleware
     if custom_middlewares:
