@@ -417,6 +417,78 @@ tools:
     use: deerflow.community.image_search.tools:image_search_tool
     max_results: 5
 
+  # Generic browser automation tool (uses browser-use)
+  # Good for exploratory "any-site" tasks. For stable production extraction on
+  # known websites, prefer dedicated deterministic tools.
+  # Requires: browser-use package + model credentials for selected provider.
+  # - name: browser_use_task
+  #   group: web
+  #   use: deerflow.community.browser_use.tools:browser_use_task_tool
+  #   llm_provider: browser_use    # browser_use | openai | anthropic | google
+  #   # llm_model: gpt-4.1-mini    # optional model override for selected provider
+  #   # llm_api_key: $OPENAI_API_KEY      # optional override for selected provider
+  #   # llm_base_url: https://api.openai.com/v1  # optional override (OpenAI-compatible endpoints)
+  #   # cdp_url: http://127.0.0.1:9222   # optional: connect to existing Chrome/CDP
+  #   # use_cloud: false                  # optional: use Browser Use cloud browser
+  #   headless: true
+
+  # Deterministic browser atomic tools (no built-in planning).
+  # Recommended when DeerFlow should be the only planner and browser execution
+  # should be low-level + controllable.
+  #
+  # - name: browser_open_session
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_open_session_tool
+  #   # cdp_url: http://127.0.0.1:9222   # optional: connect to existing Chrome/CDP
+  #   headless: true
+  #   timeout_ms: 15000
+  #   reuse_policy: task_isolated  # task_isolated | conversation_single_tab | conversation_origin_tab
+  # - name: browser_goto
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_goto_tool
+  # - name: browser_click
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_click_tool
+  # - name: browser_type
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_type_tool
+  # - name: browser_wait
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_wait_tool
+  # - name: browser_extract_text
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_extract_text_tool
+  # - name: browser_extract_list
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_extract_list_tool
+  # - name: browser_get_url
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_get_url_tool
+  # - name: browser_get_page_source
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_get_page_source_tool
+  # - name: browser_get_interactive_elements
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_get_interactive_elements_tool
+  # - name: browser_extract_links
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_extract_links_tool
+  # - name: browser_get_layout_snapshot
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_get_layout_snapshot_tool
+  # - name: browser_check_status
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_check_status_tool
+  # - name: browser_switch_tab
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_switch_tab_tool
+  # - name: browser_screenshot
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_screenshot_tool
+  # - name: browser_close_session
+  #   group: web
+  #   use: deerflow.community.browser_atomic.tools:browser_close_session_tool
+
   # Image search tool (uses InfoQuest)
   # - name: image_search
   #   group: web
