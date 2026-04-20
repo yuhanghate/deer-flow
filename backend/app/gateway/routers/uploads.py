@@ -151,6 +151,17 @@ async def upload_files(
                     file_info["markdown_path"] = str(sandbox_uploads / md_path.name)
                     file_info["markdown_virtual_path"] = md_virtual_path
                     file_info["markdown_artifact_url"] = upload_artifact_url(thread_id, md_path.name)
+                else:
+                    logger.warning(
+                        "auto_convert_documents is enabled but no Markdown was produced for %r "
+                        "(thread_id=%s, bytes=%d). Conversion failed — see ERROR log from "
+                        "convert_file_to_markdown in the same request. Common causes: legacy .doc "
+                        "not supported well by MarkItDown, file too large, or missing host converters. "
+                        "Workaround: save as .docx or export plain text and re-upload.",
+                        safe_filename,
+                        thread_id,
+                        len(content),
+                    )
 
             uploaded_files.append(file_info)
 

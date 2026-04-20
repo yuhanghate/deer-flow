@@ -11,7 +11,8 @@ This skill exists because document conversion is a common, repetitive task that 
 
 | Conversion | Command |
 |------------|---------|
-| MD → Word | `pandoc input.md -o output.docx` |
+| MD → Word (preferred) | Use tool `convert_markdown_to_docx(source_filepath, output_filename)` |
+| MD → Word (fallback only) | `pandoc input.md -o output.docx` |
 | MD → PDF | `python scripts/md2pdf.py input.md -o output.pdf` |
 | MD → PDF (explicit override for CN patent drafts) | `python scripts/md2pdf.py input.md -o output.pdf --force-direct-pdf` |
 | HTML → PDF | `python scripts/md2pdf.py input.html -o output.pdf` |
@@ -32,7 +33,12 @@ When the input looks like a Chinese patent draft, `md2pdf.py` now blocks direct 
 
 ## MD → Word
 
-pandoc handles this perfectly on all platforms:
+Default flow (no command line shown to users): call built-in tool first.
+
+1. Use `convert_markdown_to_docx` tool.
+2. If the tool is unavailable in current runtime, only then fallback to pandoc command.
+
+Fallback command:
 
 ```bash
 pandoc input.md -o output.docx

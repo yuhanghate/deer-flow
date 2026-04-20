@@ -10,7 +10,7 @@ from langchain_core.messages import HumanMessage
 from langgraph.runtime import Runtime
 
 from deerflow.config.paths import Paths, get_paths
-from deerflow.utils.file_conversion import extract_outline
+from deerflow.utils.file_conversion import CONVERTIBLE_EXTENSIONS, extract_outline
 
 logger = logging.getLogger(__name__)
 
@@ -81,12 +81,44 @@ class UploadsMiddleware(AgentMiddleware[UploadsMiddlewareState]):
         super().__init__()
         self._paths = Paths(base_dir) if base_dir else get_paths()
 
-    def _format_file_entry(self, file: dict, lines: list[str]) -> None:
+    def _format_file_entry(self, file: dict, lines: list[str], uploads_dir: Path | None = None) -> None:
         """Append a single file entry (name, size, path, optional outline) to lines."""
         size_kb = file["size"] / 1024
         size_str = f"{size_kb:.1f} KB" if size_kb < 1024 else f"{size_kb / 1024:.1f} MB"
         lines.append(f"- {file['filename']} ({size_str})")
         lines.append(f"  Path: {file['path']}")
+        if uploads_dir is not None:
+            md_sibling = uploads_dir / Path(file["filename"]).with_suffix(".md").name
+            if md_sibling.is_file() and md_sibling.name != file["filename"]:
+                lines.append(
+                    f"  Converted Markdown (prefer read_file on this path): "
+                    f"Path: /mnt/user-data/uploads/{md_sibling.name}"
+                )
+            elif Path(file["filename"]).suffix.lower() in CONVERTIBLE_EXTENSIONS:
+                ext = Path(file["filename"]).suffix.lower()
+                if ext == ".doc":
+                    lines.append(
+                        "  【给用户的说明（请原样转告或展示）】本文件为旧版 Word 二进制格式（.doc），"
+                        "服务端未能生成可读的 Markdown（.md）。请勿安装 antiword/LibreOffice 等在对话里硬解析。"
+                        "请在本机用 Microsoft Word 或 WPS 打开该文件，使用「另存为」保存为 **.docx**；"
+                        "或导出为 **.txt** / **.md** 后，在本对话中重新上传。上传后若已开启 "
+                        "`uploads.auto_convert_documents`，应出现同名 `.md` 再让助手阅读。"
+                    )
+                    lines.append(
+                        "  【助手行为】不得使用 bash 调用 antiword/catdoc/soffice/olefile/strings 解析该 .doc；"
+                        "直接向用户说明上一段方案。若用户已重新上传 .docx，优先 read_file 其同名 .md。"
+                    )
+                else:
+                    lines.append(
+                        "  【给用户的说明（请原样转告或展示）】未检测到本 Office 文件对应的自动转换结果（.md）。"
+                        "请确认部署已在 config.yaml 中开启 `uploads.auto_convert_documents: true` 并已重启服务，"
+                        "然后删除旧附件、重新上传；若仍无 .md，可将内容另存为 .docx 或导出 .txt 再传，"
+                        "或缩小文件体积后重试，并请管理员查看网关日志中 `Failed to convert` 相关 ERROR。"
+                    )
+                    lines.append(
+                        "  【助手行为】不得用 bash 自行安装解析库或调用 LibreOffice 解析二进制原件；"
+                        "先向用户说明上一段，再等待用户重新上传可转换格式。"
+                    )
         outline = file.get("outline") or []
         if outline:
             truncated = outline[-1].get("truncated", False)
@@ -105,7 +137,9 @@ class UploadsMiddleware(AgentMiddleware[UploadsMiddlewareState]):
             lines.append("  Use `grep` to search for keywords (e.g. `grep(pattern='keyword', path='/mnt/user-data/uploads/')`).")
         lines.append("")
 
-    def _create_files_message(self, new_files: list[dict], historical_files: list[dict]) -> str:
+    def _create_files_message(
+        self, new_files: list[dict], historical_files: list[dict], uploads_dir: Path | None
+    ) -> str:
         """Create a formatted message listing uploaded files.
 
         Args:
@@ -123,7 +157,7 @@ class UploadsMiddleware(AgentMiddleware[UploadsMiddlewareState]):
         lines.append("")
         if new_files:
             for file in new_files:
-                self._format_file_entry(file, lines)
+                self._format_file_entry(file, lines, uploads_dir)
         else:
             lines.append("(empty)")
             lines.append("")
@@ -132,10 +166,14 @@ class UploadsMiddleware(AgentMiddleware[UploadsMiddlewareState]):
             lines.append("The following files were uploaded in previous messages and are still available:")
             lines.append("")
             for file in historical_files:
-                self._format_file_entry(file, lines)
+                self._format_file_entry(file, lines, uploads_dir)
 
         lines.append("To work with these files:")
-        lines.append("- Read from the file first — use the outline line numbers and `read_file` to locate relevant sections.")
+        lines.append(
+            "- For Office uploads, if a \"Converted Markdown\" path is shown above, use `read_file` on that `.md` "
+            "first — do not use bash, antiword, LibreOffice, or ad-hoc Python to parse the binary original."
+        )
+        lines.append("- Otherwise read from the file first — use the outline line numbers and `read_file` to locate relevant sections.")
         lines.append("- Use `grep` to search for keywords when you are not sure which section to look at")
         lines.append("  (e.g. `grep(pattern='revenue', path='/mnt/user-data/uploads/')`).")
         lines.append("- Use `glob` to find files by name pattern")
@@ -259,7 +297,7 @@ class UploadsMiddleware(AgentMiddleware[UploadsMiddlewareState]):
         logger.debug(f"New files: {[f['filename'] for f in new_files]}, historical: {[f['filename'] for f in historical_files]}")
 
         # Create files message and prepend to the last human message content
-        files_message = self._create_files_message(new_files, historical_files)
+        files_message = self._create_files_message(new_files, historical_files, uploads_dir)
 
         # Extract original content - handle both string and list formats
         original_content = last_message.content

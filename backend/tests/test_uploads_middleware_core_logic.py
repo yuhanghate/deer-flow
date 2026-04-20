@@ -155,7 +155,7 @@ class TestCreateFilesMessage:
 
     def test_new_files_section_always_present(self, tmp_path):
         mw = _middleware(tmp_path)
-        msg = mw._create_files_message([self._new_file()], [])
+        msg = mw._create_files_message([self._new_file()], [], None)
         assert "<uploaded_files>" in msg
         assert "</uploaded_files>" in msg
         assert "uploaded in this message" in msg
@@ -165,32 +165,32 @@ class TestCreateFilesMessage:
     def test_historical_section_present_only_when_non_empty(self, tmp_path):
         mw = _middleware(tmp_path)
 
-        msg_no_hist = mw._create_files_message([self._new_file()], [])
+        msg_no_hist = mw._create_files_message([self._new_file()], [], None)
         assert "previous messages" not in msg_no_hist
 
         hist = self._new_file("old.txt")
-        msg_with_hist = mw._create_files_message([self._new_file()], [hist])
+        msg_with_hist = mw._create_files_message([self._new_file()], [hist], None)
         assert "previous messages" in msg_with_hist
         assert "old.txt" in msg_with_hist
 
     def test_size_formatting_kb(self, tmp_path):
         mw = _middleware(tmp_path)
-        msg = mw._create_files_message([self._new_file(size=2048)], [])
+        msg = mw._create_files_message([self._new_file(size=2048)], [], None)
         assert "2.0 KB" in msg
 
     def test_size_formatting_mb(self, tmp_path):
         mw = _middleware(tmp_path)
-        msg = mw._create_files_message([self._new_file(size=2 * 1024 * 1024)], [])
+        msg = mw._create_files_message([self._new_file(size=2 * 1024 * 1024)], [], None)
         assert "2.0 MB" in msg
 
     def test_read_file_instruction_included(self, tmp_path):
         mw = _middleware(tmp_path)
-        msg = mw._create_files_message([self._new_file()], [])
+        msg = mw._create_files_message([self._new_file()], [], None)
         assert "read_file" in msg
 
     def test_empty_new_files_produces_empty_marker(self, tmp_path):
         mw = _middleware(tmp_path)
-        msg = mw._create_files_message([], [])
+        msg = mw._create_files_message([], [], None)
         assert "(empty)" in msg
         assert "<uploaded_files>" in msg
         assert "</uploaded_files>" in msg
@@ -378,6 +378,23 @@ class TestBeforeAgent:
         assert result is not None
         content = result["messages"][-1].content
         assert "Document outline" not in content
+        assert "【给用户的说明" in content
+        assert "auto_convert_documents" in content
+
+    def test_doc_without_md_shows_docx_user_hint(self, tmp_path):
+        """Legacy .doc without sibling .md gets the stronger 另存为 docx guidance."""
+        mw = _middleware(tmp_path)
+        uploads_dir = _uploads_dir(tmp_path)
+        (uploads_dir / "brief.doc").write_bytes(b"fake-doc-binary")
+
+        msg = _human("read", files=[{"filename": "brief.doc", "size": 16, "path": "/mnt/user-data/uploads/brief.doc"}])
+        result = mw.before_agent(self._state(msg), _runtime())
+
+        assert result is not None
+        content = result["messages"][-1].content
+        assert "旧版 Word 二进制格式（.doc）" in content
+        assert "另存为" in content and ".docx" in content
+        assert "antiword" in content
 
     def test_outline_truncation_hint_shown(self, tmp_path):
         """When outline is truncated, a hint line is appended after the last visible entry."""
