@@ -106,7 +106,7 @@ LLM-powered persistent context retention across conversations:
 |----------|-------|
 | **Sandbox** | `bash`, `ls`, `read_file`, `write_file`, `str_replace` |
 | **Built-in** | `present_files`, `ask_clarification`, `view_image`, `task` (subagent) |
-| **Community** | Tavily (web search), Jina AI (web fetch), Firecrawl (scraping), DuckDuckGo (image search) |
+| **Community** | Tavily (web search), Jina AI (web fetch), Firecrawl (scraping), DuckDuckGo (image search), Browser Use (generic browser automation), Browser Atomic (deterministic Playwright/CDP tools with status/source/interactive-elements/links/layout probes and configurable session reuse policies) |
 | **MCP** | Any Model Context Protocol server (stdio, SSE, HTTP transports) |
 | **Skills** | Domain-specific workflows injected via system prompt |
 
@@ -393,6 +393,7 @@ uv run pytest
 - **agent-sandbox** - Sandboxed code execution
 - **markitdown** - Multi-format document conversion
 - **tavily-python** / **firecrawl-py** - Web search and scraping
+- **playwright** - Deterministic browser automation for browser atomic tools
 
 ---
 
