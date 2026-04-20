@@ -13,6 +13,8 @@ description: 机械结构、机构、工装夹具、传动、流体/热工设备
 
 **摘要**：见 `patent-cn-core/references/abstract-summary.md`；样板见 `patent-cn-core/resources/samples/mechanical/`（与 core 同步，选用**可抽取文字层**公告 PDF，便于全文对照）。
 
+**超长上下文**：`config.yaml` 中 `summarization` 启用时由平台自动压缩旧对话。若仍感到上下文紧张，先按 `patent-cn-core` 中「超长上下文与对话承接」输出《对话承接稿》，并**额外**保留本 skill 相关的构件—标号—名称对照、权利要求项号与装配/剖视叙述进度，再继续撰写。
+
 ## 工作流
 
 1. 让用户明确（或从交底推断）**关键附图**：立体图、剖视图、爆炸图各承担什么信息；不确定则列出假设并请确认。

@@ -13,6 +13,8 @@ description: 电学、电子、通信、自动控制、嵌入式、软硬件结�
 
 **摘要**：见 `patent-cn-core/references/abstract-summary.md`；样板见 `patent-cn-core/resources/samples/electrical/`（均为**可抽取文字层**公告 PDF，便于全文对照）。
 
+**超长上下文**：`config.yaml` 中 `summarization` 启用时由平台自动压缩旧对话。若仍感到上下文紧张，先按 `patent-cn-core` 中「超长上下文与对话承接」输出《对话承接稿》，并**额外**保留模块—接口—数据流约定、方法步骤与装置权项的对应关系及当前项号，再继续撰写。
+
 ## 工作流
 
 1. 先画清**逻辑结构**：输入源 → 处理单元 → 输出/执行；标出反馈环与异常路径（若交底中有）。
