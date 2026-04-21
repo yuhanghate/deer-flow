@@ -57,7 +57,7 @@ export const enUS: Translations = {
       "These files are in the current thread workspace. Choose one to download.",
     emptyList: "No downloadable files",
     loadFailed: "Failed to load file list",
-    downloadThisFile: "Download",
+    downloadThisFile: "Patent Download",
   },
 
   // Home
