@@ -29,7 +29,7 @@ export const zhCN: Translations = {
     close: "关闭",
     more: "更多",
     search: "搜索",
-    download: "下载",
+    download: "专利下载",
     thinking: "思考",
     artifacts: "文件",
     public: "公共",
@@ -57,7 +57,7 @@ export const zhCN: Translations = {
       "以下为当前对话线程目录下的文件，请选择要下载的文件。",
     emptyList: "暂无可下载文件",
     loadFailed: "加载文件列表失败",
-    downloadThisFile: "专利下载",
+    downloadThisFile: "下载",
   },
 
   // Home

@@ -29,7 +29,7 @@ export const enUS: Translations = {
     close: "Close",
     more: "More",
     search: "Search",
-    download: "Download",
+    download: "Patent Download",
     thinking: "Thinking",
     artifacts: "Artifacts",
     public: "Public",
@@ -57,7 +57,7 @@ export const enUS: Translations = {
       "These files are in the current thread workspace. Choose one to download.",
     emptyList: "No downloadable files",
     loadFailed: "Failed to load file list",
-    downloadThisFile: "Patent Download",
+    downloadThisFile: "Download",
   },
 
   // Home
