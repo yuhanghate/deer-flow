@@ -74,6 +74,14 @@ def auto_add_headings(content: str) -> str:
             result.append(line)
             continue
 
+        # Skip Markdown pipe tables (lines starting with |)
+        if stripped := line.strip():
+            if stripped.startswith("|"):
+                result.append(line)
+                if not first_handled:
+                    first_handled = True
+                continue
+
         if not first_handled:
             stripped = line.strip()
             is_known = (
@@ -134,7 +142,8 @@ def preprocess_markdown_to_html(content: str) -> str:
     content = auto_add_headings(content)
 
     # Step B: markdown → HTML (Python-Markdown library)
-    html = markdown.markdown(content)
+    # Enable tables extension so pipe tables become <table> elements
+    html = markdown.markdown(content, extensions=["tables"])
 
     # Step C: inject <sub> / <sup> tags into the HTML
 

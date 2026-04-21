@@ -298,3 +298,32 @@ def test_mixed_unicode_and_underscore():
     # Unicode ₂ → <sub>2</sub>, underscore _{14} → <sub>14</sub>
     assert result.count("<sub>2</sub>") >= 1
     assert result.count("<sub>14</sub>") >= 1
+
+
+# ── Markdown tables → HTML <table> ─────────────────────────────────────────
+
+
+def test_pipe_table_rendered_as_html_table():
+    """Markdown pipe tables should become <table> elements, not plain text."""
+    content = """| 组别 | 参数 | 结果 |
+|------|------|------|
+| A | 100 | 99.0 |
+| B | 200 | 98.5 |"""
+    result = preprocess_markdown_to_html(content)
+    assert "<table>" in result
+    assert "<thead>" in result
+    assert "<tbody>" in result
+    assert "| 组别 |" not in result
+
+
+def test_table_with_subscript_content():
+    """Tables containing chemical formulas should preserve both table and subscripts."""
+    content = """| 材料 | 化学式 |
+|------|--------|
+| 磁体 | Nd₂Fe₁₄B |
+| 氧化物 | CO₂ |"""
+    result = preprocess_markdown_to_html(content)
+    assert "<table>" in result
+    assert "<sub>2</sub>" in result
+    assert "<sub>14</sub>" in result
+
