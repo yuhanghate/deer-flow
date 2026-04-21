@@ -110,7 +110,7 @@ export default function ChatPage() {
                 messages={thread.messages}
               />
               <ExportTrigger threadId={threadId} />
-              <ArtifactTrigger />
+              <ArtifactTrigger threadId={threadId} isMock={isMock} />
             </div>
           </header>
           <main className="flex min-h-0 max-w-full grow flex-col">

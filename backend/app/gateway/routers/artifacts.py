@@ -5,13 +5,16 @@ from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 
 from app.gateway.path_utils import resolve_thread_virtual_path
+from deerflow.config.paths import VIRTUAL_PATH_PREFIX, get_paths
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["artifacts"])
+
+_MAX_LISTED_ARTIFACT_FILES = 500
 
 ACTIVE_CONTENT_MIME_TYPES = {
     "text/html",
@@ -30,6 +33,33 @@ def _build_attachment_headers(filename: str, extra_headers: dict[str, str] | Non
     if extra_headers:
         headers.update(extra_headers)
     return headers
+
+
+def _list_thread_user_data_files(thread_id: str) -> list[str]:
+    """Return virtual paths for all regular files under the thread user-data root."""
+    base = get_paths().sandbox_user_data_dir(thread_id).resolve()
+    if not base.is_dir():
+        return []
+
+    files: list[tuple[float, str]] = []
+    for path in base.rglob("*"):
+        if not path.is_file():
+            continue
+        if any(part.startswith(".") for part in path.parts):
+            continue
+        try:
+            rel = path.resolve().relative_to(base)
+        except ValueError:
+            continue
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            mtime = 0.0
+        virtual = f"{VIRTUAL_PATH_PREFIX}/{rel.as_posix()}"
+        files.append((mtime, virtual))
+
+    files.sort(key=lambda item: -item[0])
+    return [p for _, p in files[:_MAX_LISTED_ARTIFACT_FILES]]
 
 
 def is_text_file_by_content(path: Path, sample_size: int = 8192) -> bool:
@@ -74,6 +104,20 @@ def _extract_file_from_skill_archive(zip_path: Path, internal_path: str) -> byte
             return None
     except (zipfile.BadZipFile, KeyError):
         return None
+
+
+@router.get(
+    "/threads/{thread_id}/artifact-files",
+    summary="List Artifact Files",
+    description="List all regular files under the thread sandbox user-data tree (workspace, uploads, outputs).",
+)
+async def list_artifact_files(thread_id: str) -> JSONResponse:
+    """Return JSON ``{\"paths\": [\"/mnt/user-data/outputs/...\", ...]}`` sorted by mtime (newest first)."""
+    try:
+        paths = _list_thread_user_data_files(thread_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return JSONResponse(content={"paths": paths})
 
 
 @router.get(

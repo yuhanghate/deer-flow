@@ -51,6 +51,15 @@ export const enUS: Translations = {
     exportSuccess: "Conversation exported",
   },
 
+  artifactFiles: {
+    downloadDialogTitle: "Download files",
+    downloadDialogDescription:
+      "These files are in the current thread workspace. Choose one to download.",
+    emptyList: "No downloadable files",
+    loadFailed: "Failed to load file list",
+    downloadThisFile: "Download",
+  },
+
   // Home
   home: {
     docs: "Docs",

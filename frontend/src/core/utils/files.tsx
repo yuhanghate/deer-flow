@@ -147,6 +147,22 @@ export function getFileName(filepath: string) {
   return filepath.split("/").pop()!;
 }
 
+/** Split `_v` + long numeric stamp before extension (e.g. patent outputs `…_v202604210949.docx`). */
+export function getVersionedFileNameParts(fileName: string): {
+  title: string;
+  versionDigits: string | null;
+} {
+  const m = fileName.match(/^(.+)_v(\d{8,})(\.[^/.]+)$/);
+  if (!m) {
+    return { title: fileName, versionDigits: null };
+  }
+  const [, base, digits, ext] = m;
+  if (!base || !digits || !ext) {
+    return { title: fileName, versionDigits: null };
+  }
+  return { title: `${base}${ext}`, versionDigits: digits };
+}
+
 export function getFileExtension(filepath: string) {
   return filepath.split(".").pop()!.toLocaleLowerCase();
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { BotIcon, PlusSquare } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
@@ -35,6 +35,8 @@ export default function AgentChatPage() {
   const { t } = useI18n();
   const [showFollowups, setShowFollowups] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isMock = searchParams.get("mock") === "true";
 
   const { agent_name } = useParams<{
     agent_name: string;
@@ -135,7 +137,7 @@ export default function AgentChatPage() {
                 messages={thread.messages}
               />
               <ExportTrigger threadId={threadId} />
-              <ArtifactTrigger />
+              <ArtifactTrigger threadId={threadId} isMock={isMock} />
             </div>
           </header>
 

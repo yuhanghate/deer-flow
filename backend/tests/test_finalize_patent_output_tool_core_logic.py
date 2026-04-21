@@ -6,6 +6,7 @@ from datetime import datetime
 from types import SimpleNamespace
 
 finalize_patent_output_tool_module = importlib.import_module("deerflow.tools.builtins.finalize_patent_output_tool")
+_output_versioning_module = importlib.import_module("deerflow.tools.builtins._output_versioning")
 
 
 def _make_runtime(workspace_path: str, uploads_path: str, outputs_path: str) -> SimpleNamespace:
@@ -40,7 +41,7 @@ def test_finalize_patent_output_uses_timestamp_version(tmp_path, monkeypatch):
         def now(cls, tz=None):
             return fixed_now
 
-    monkeypatch.setattr(finalize_patent_output_tool_module, "datetime", FixedDateTime)
+    monkeypatch.setattr(_output_versioning_module, "datetime", FixedDateTime)
 
     result = finalize_patent_output_tool_module.finalize_patent_output_tool.func(
         runtime=_make_runtime(str(workspace_dir), str(uploads_dir), str(outputs_dir)),
@@ -50,11 +51,11 @@ def test_finalize_patent_output_uses_timestamp_version(tmp_path, monkeypatch):
     )
 
     artifact_path = result.update["artifacts"][0]
-    assert re.fullmatch(r"/mnt/user-data/outputs/一种_新型_装置_v20260420144630\.docx", artifact_path)
-    assert (outputs_dir / "一种_新型_装置_v20260420144630.docx").read_text() == "专利草稿"
+    assert re.fullmatch(r"/mnt/user-data/outputs/一种_新型_装置_v202604201446\.docx", artifact_path)
+    assert (outputs_dir / "一种_新型_装置_v202604201446.docx").read_text() == "专利草稿"
 
 
-def test_finalize_patent_output_bumps_second_when_same_timestamp_exists(tmp_path, monkeypatch):
+def test_finalize_patent_output_bumps_minute_when_same_timestamp_exists(tmp_path, monkeypatch):
     workspace_dir = tmp_path / "workspace"
     uploads_dir = tmp_path / "uploads"
     outputs_dir = tmp_path / "outputs"
@@ -72,8 +73,8 @@ def test_finalize_patent_output_bumps_second_when_same_timestamp_exists(tmp_path
         def now(cls, tz=None):
             return fixed_now
 
-    monkeypatch.setattr(finalize_patent_output_tool_module, "datetime", FixedDateTime)
-    (outputs_dir / "标题_v20260420144630.docx").write_text("旧版本")
+    monkeypatch.setattr(_output_versioning_module, "datetime", FixedDateTime)
+    (outputs_dir / "标题_v202604201446.docx").write_text("旧版本")
 
     result = finalize_patent_output_tool_module.finalize_patent_output_tool.func(
         runtime=_make_runtime(str(workspace_dir), str(uploads_dir), str(outputs_dir)),
@@ -82,5 +83,5 @@ def test_finalize_patent_output_bumps_second_when_same_timestamp_exists(tmp_path
         tool_call_id="tc-2",
     )
 
-    assert result.update["artifacts"] == ["/mnt/user-data/outputs/标题_v20260420144631.docx"]
-    assert (outputs_dir / "标题_v20260420144631.docx").read_text() == "内容A"
+    assert result.update["artifacts"] == ["/mnt/user-data/outputs/标题_v202604201447.docx"]
+    assert (outputs_dir / "标题_v202604201447.docx").read_text() == "内容A"

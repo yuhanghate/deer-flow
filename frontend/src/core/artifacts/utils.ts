@@ -13,9 +13,22 @@ export function urlOfArtifact({
   isMock?: boolean;
 }) {
   if (isMock) {
-    return `${getBackendBaseURL()}/mock/api/threads/${threadId}/artifacts${filepath}${download ? "?download=true" : ""}`;
+    return `${getBackendBaseURL()}/mock/api/threads/${encodeURIComponent(threadId)}/artifacts${filepath}${download ? "?download=true" : ""}`;
   }
-  return `${getBackendBaseURL()}/api/threads/${threadId}/artifacts${filepath}${download ? "?download=true" : ""}`;
+  return `${getBackendBaseURL()}/api/threads/${encodeURIComponent(threadId)}/artifacts${filepath}${download ? "?download=true" : ""}`;
+}
+
+export function urlOfArtifactFilesIndex({
+  threadId,
+  isMock = false,
+}: {
+  threadId: string;
+  isMock?: boolean;
+}) {
+  if (isMock) {
+    return `${getBackendBaseURL()}/mock/api/threads/${encodeURIComponent(threadId)}/artifact-files`;
+  }
+  return `${getBackendBaseURL()}/api/threads/${encodeURIComponent(threadId)}/artifact-files`;
 }
 
 export function extractArtifactsFromThread(thread: AgentThread) {

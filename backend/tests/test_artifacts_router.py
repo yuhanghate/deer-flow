@@ -102,3 +102,25 @@ def test_get_artifact_download_true_forces_attachment_for_skill_archive(tmp_path
     assert response.status_code == 200
     assert response.text == "hello"
     assert response.headers.get("content-disposition", "").startswith("attachment;")
+
+
+def test_list_artifact_files_returns_json_paths(monkeypatch) -> None:
+    monkeypatch.setattr(
+        artifacts_router,
+        "_list_thread_user_data_files",
+        lambda _thread_id: [
+            "/mnt/user-data/outputs/a.docx",
+            "/mnt/user-data/workspace/b.md",
+        ],
+    )
+    app = FastAPI()
+    app.include_router(artifacts_router.router)
+    with TestClient(app) as client:
+        response = client.get("/api/threads/thread-1/artifact-files")
+    assert response.status_code == 200
+    assert response.json() == {
+        "paths": [
+            "/mnt/user-data/outputs/a.docx",
+            "/mnt/user-data/workspace/b.md",
+        ],
+    }

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 import shutil
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Annotated
 
@@ -14,6 +13,8 @@ from langgraph.typing import ContextT
 
 from deerflow.agents.thread_state import ThreadState
 from deerflow.config.paths import VIRTUAL_PATH_PREFIX, get_paths
+
+from ._output_versioning import resolve_unique_versioned_filename, strip_trailing_v_suffix
 
 _PATENT_FILENAME_INVALID_CHARS = re.compile(r"[\\/:*?\"<>|]+")
 
@@ -83,17 +84,6 @@ def _is_relative_to(path: Path, root: Path) -> bool:
         return False
 
 
-def _next_timestamp_version(outputs_dir: Path, title: str, suffix: str) -> str:
-    version_time = datetime.now()
-    while True:
-        version = version_time.strftime("%Y%m%d%H%M%S")
-        target_name = f"{title}_v{version}{suffix}"
-        if not (outputs_dir / target_name).exists():
-            return version
-        # Avoid same-second collisions by advancing one second.
-        version_time += timedelta(seconds=1)
-
-
 @tool("finalize_patent_output", parse_docstring=True)
 def finalize_patent_output_tool(
     runtime: ToolRuntime[ContextT, ThreadState],
@@ -104,10 +94,10 @@ def finalize_patent_output_tool(
     """Finalize a patent draft into a versioned single output file and present it to the user.
 
     Use this when a patent draft is complete and you need one deliverable file named
-    `专利名称_vYYYYMMDDHHMMSS.<ext>` in `/mnt/user-data/outputs`.
+    `vYYYYMMDDHHMM_专利名称.<ext>` in `/mnt/user-data/outputs`.
 
     Args:
-        patent_title: Patent title used for the output filename prefix.
+        patent_title: Patent title used for the output filename suffix.
         source_filepath: Absolute source file path (typically in `/mnt/user-data/workspace` or `/mnt/user-data/outputs`).
     """
     try:
@@ -123,9 +113,11 @@ def finalize_patent_output_tool(
         outputs_dir.mkdir(parents=True, exist_ok=True)
 
         normalized_title = _normalize_patent_title(patent_title)
+        normalized_title = strip_trailing_v_suffix(normalized_title) or normalized_title
         suffix = source_path.suffix or ".docx"
-        version = _next_timestamp_version(outputs_dir, normalized_title, suffix)
-        target_name = f"{normalized_title}_v{version}{suffix}"
+        target_name = resolve_unique_versioned_filename(
+            outputs_dir, normalized_title, suffix
+        )
         target_path = outputs_dir / target_name
         shutil.copy2(source_path, target_path)
 

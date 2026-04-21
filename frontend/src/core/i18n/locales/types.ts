@@ -40,6 +40,14 @@ export interface Translations {
     exportSuccess: string;
   };
 
+  artifactFiles: {
+    downloadDialogTitle: string;
+    downloadDialogDescription: string;
+    emptyList: string;
+    loadFailed: string;
+    downloadThisFile: string;
+  };
+
   home: {
     docs: string;
     blog: string;

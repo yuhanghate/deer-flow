@@ -14,6 +14,8 @@ from langgraph.typing import ContextT
 from deerflow.agents.thread_state import ThreadState
 from deerflow.config.paths import VIRTUAL_PATH_PREFIX, get_paths
 
+from ._output_versioning import resolve_unique_versioned_filename, strip_trailing_v_suffix
+
 _INVALID_CHARS = re.compile(r"[\\/:*?\"<>|]+")
 _ALLOWED_MARKDOWN_EXTS = {".md", ".markdown"}
 _MAX_ERROR_CHARS = 1200
@@ -87,28 +89,20 @@ def _sanitize_filename(filename: str) -> str:
     return cleaned
 
 
-def _resolve_output_path(outputs_dir: Path, source_path: Path, output_filename: str) -> Path:
+def _docx_base_stem(output_filename: str, source_path: Path) -> str:
+    """Derive a safe base stem; strip prior ``_v2.0`` / ``_v2026…`` style suffixes."""
     if output_filename.strip():
-        name = _sanitize_filename(output_filename)
-        if not name:
+        raw = _sanitize_filename(output_filename.strip())
+        if not raw:
             raise ValueError("output_filename is invalid after sanitization")
+        stem = Path(raw).stem if raw.lower().endswith(".docx") else raw
     else:
-        name = source_path.stem
-
-    if not name.lower().endswith(".docx"):
-        name = f"{name}.docx"
-    target = outputs_dir / name
-    if not target.exists():
-        return target
-
-    stem = target.stem
-    suffix = target.suffix
-    index = 1
-    while True:
-        candidate = outputs_dir / f"{stem}_{index}{suffix}"
-        if not candidate.exists():
-            return candidate
-        index += 1
+        stem = source_path.stem
+    stem = strip_trailing_v_suffix(stem) or stem
+    stem = _sanitize_filename(stem)
+    if not stem:
+        stem = _sanitize_filename(source_path.stem) or "output"
+    return stem
 
 
 def _convert_with_pandoc(source_path: Path, target_path: Path) -> tuple[bool, str]:
@@ -138,7 +132,8 @@ def convert_markdown_to_docx_tool(
 
     Args:
         source_filepath: Absolute path of the Markdown source file.
-        output_filename: Optional target filename (with or without `.docx`).
+        output_filename: Optional logical name (with or without ``.docx``); the saved
+            file is always ``vYYYYMMDDHHMM_{name}.docx`` under outputs.
     """
     try:
         if runtime.state is None:
@@ -152,7 +147,9 @@ def convert_markdown_to_docx_tool(
         source_path = _resolve_source_path(runtime, source_filepath)
         outputs_dir = Path(outputs_path).resolve()
         outputs_dir.mkdir(parents=True, exist_ok=True)
-        target_path = _resolve_output_path(outputs_dir, source_path, output_filename)
+        base_stem = _docx_base_stem(output_filename, source_path)
+        target_name = resolve_unique_versioned_filename(outputs_dir, base_stem, ".docx")
+        target_path = outputs_dir / target_name
 
         ok, error_message = _convert_with_pandoc(source_path, target_path)
         if not ok:

@@ -51,6 +51,15 @@ export const zhCN: Translations = {
     exportSuccess: "对话已导出",
   },
 
+  artifactFiles: {
+    downloadDialogTitle: "下载产物",
+    downloadDialogDescription:
+      "以下为当前对话线程目录下的文件，请选择要下载的文件。",
+    emptyList: "暂无可下载文件",
+    loadFailed: "加载文件列表失败",
+    downloadThisFile: "下载",
+  },
+
   // Home
   home: {
     docs: "文档",
