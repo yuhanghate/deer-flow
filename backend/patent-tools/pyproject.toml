@@ -1,0 +1,29 @@
+[project]
+name = "deerflow-patent-tools"
+version = "0.1.0"
+description = "Patent drafting tools for DeerFlow — Markdown→DOCX conversion and output finalization."
+requires-python = ">=3.12"
+dependencies = [
+    "deerflow-harness",
+    "langchain>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langgraph>=0.4.0",
+    "markdown>=3.6",
+    "pandoc",
+]
+
+[tool.ruff]
+line-length = 240
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]

@@ -17,7 +17,7 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
 PANDOC_DEFAULT = Path("/tmp/default-reference.docx")
-OUTPUT = SCRIPT_DIR / "patent-reference.docx"
+OUTPUT = SCRIPT_DIR / "patent_tools" / "resources" / "patent-reference.docx"
 
 # CJK font fallback chain — tried in order, first installed font wins
 CJK_FONT = "SimSun, PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif"

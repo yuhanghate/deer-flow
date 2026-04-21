@@ -7,8 +7,6 @@ from deerflow.reflection import resolve_variable
 from deerflow.sandbox.security import is_host_bash_allowed
 from deerflow.tools.builtins import (
     ask_clarification_tool,
-    convert_markdown_to_docx_tool,
-    finalize_patent_output_tool,
     present_file_tool,
     task_tool,
     view_image_tool,
@@ -19,8 +17,6 @@ logger = logging.getLogger(__name__)
 
 BUILTIN_TOOLS = [
     present_file_tool,
-    convert_markdown_to_docx_tool,
-    finalize_patent_output_tool,
     ask_clarification_tool,
 ]
 
@@ -87,6 +83,15 @@ def get_available_tools(
 
     # Conditionally add tools based on config
     builtin_tools = BUILTIN_TOOLS.copy()
+
+    # Patent tools live in a separate package to avoid modifying upstream core.
+    # Delayed import here to break circular dependency with deerflow.agents.
+    try:
+        from patent_tools import convert_markdown_to_docx_tool, finalize_patent_output_tool
+
+        builtin_tools.extend([convert_markdown_to_docx_tool, finalize_patent_output_tool])
+    except ImportError:
+        logger.debug("patent_tools package not available, skipping patent tools")
     skill_evolution_config = getattr(config, "skill_evolution", None)
     if getattr(skill_evolution_config, "enabled", False):
         from deerflow.tools.skill_manage_tool import skill_manage_tool

@@ -14,7 +14,8 @@ from langgraph.typing import ContextT
 from deerflow.agents.thread_state import ThreadState
 from deerflow.config.paths import VIRTUAL_PATH_PREFIX, get_paths
 
-from ._output_versioning import resolve_unique_versioned_filename, strip_trailing_v_suffix
+from .markdown_processor import preprocess_markdown_to_html
+from .output_versioning import resolve_unique_versioned_filename, strip_trailing_v_suffix
 
 _PATENT_FILENAME_INVALID_CHARS = re.compile(r"[\\/:*?\"<>|]+")
 _ALLOWED_MD_EXTS = {".md", ".markdown"}
@@ -36,11 +37,12 @@ def _get_thread_id(runtime: ToolRuntime[ContextT, ThreadState]) -> str | None:
         return None
 
 
-def _normalize_patent_title(title: str) -> str:
-    normalized = _PATENT_FILENAME_INVALID_CHARS.sub("_", title).strip()
-    normalized = re.sub(r"\s+", "_", normalized)
-    normalized = re.sub(r"_+", "_", normalized).strip("_")
-    return normalized or "未命名专利"
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
 
 
 def _resolve_source_path(runtime: ToolRuntime[ContextT, ThreadState], source_filepath: str) -> Path:
@@ -77,12 +79,11 @@ def _resolve_source_path(runtime: ToolRuntime[ContextT, ThreadState], source_fil
     return source_path
 
 
-def _is_relative_to(path: Path, root: Path) -> bool:
-    try:
-        path.relative_to(root)
-        return True
-    except ValueError:
-        return False
+def _normalize_patent_title(title: str) -> str:
+    normalized = _PATENT_FILENAME_INVALID_CHARS.sub("_", title).strip()
+    normalized = re.sub(r"\s+", "_", normalized)
+    normalized = re.sub(r"_+", "_", normalized).strip("_")
+    return normalized or "未命名专利"
 
 
 @tool("finalize_patent_output", parse_docstring=True)
@@ -117,17 +118,11 @@ def finalize_patent_output_tool(
         normalized_title = strip_trailing_v_suffix(normalized_title) or normalized_title
         suffix = source_path.suffix or ".docx"
 
-        # Pre-process Markdown files before saving
+        # Pre-process Markdown files: convert to HTML with <sub>/<sup> tags
         if source_path.suffix.lower() in _ALLOWED_MD_EXTS:
-            try:
-                from .convert_markdown_to_docx_tool import _preprocess_markdown
-            except ImportError:
-                _preprocess_markdown = None  # type: ignore[misc]
-
-            if _preprocess_markdown is not None:
-                content = source_path.read_text(encoding="utf-8")
-                preprocessed = _preprocess_markdown(content)
-                source_path.write_text(preprocessed, encoding="utf-8")
+            content = source_path.read_text(encoding="utf-8")
+            preprocessed = preprocess_markdown_to_html(content)
+            source_path.write_text(preprocessed, encoding="utf-8")
 
         target_name = resolve_unique_versioned_filename(
             outputs_dir, normalized_title, suffix

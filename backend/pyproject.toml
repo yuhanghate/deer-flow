@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "deerflow-harness",
+    "deerflow-patent-tools",
     "fastapi>=0.115.0",
     "httpx>=0.28.0",
     "python-multipart>=0.0.26",
@@ -25,7 +26,8 @@ dependencies = [
 dev = ["pytest>=9.0.3", "ruff>=0.14.11"]
 
 [tool.uv.workspace]
-members = ["packages/harness"]
+members = ["packages/harness", "patent-tools"]
 
 [tool.uv.sources]
 deerflow-harness = { workspace = true }
+deerflow-patent-tools = { workspace = true }
