@@ -17,6 +17,7 @@ from deerflow.config.paths import VIRTUAL_PATH_PREFIX, get_paths
 from ._output_versioning import resolve_unique_versioned_filename, strip_trailing_v_suffix
 
 _PATENT_FILENAME_INVALID_CHARS = re.compile(r"[\\/:*?\"<>|]+")
+_ALLOWED_MD_EXTS = {".md", ".markdown"}
 
 
 def _get_thread_id(runtime: ToolRuntime[ContextT, ThreadState]) -> str | None:
@@ -115,6 +116,19 @@ def finalize_patent_output_tool(
         normalized_title = _normalize_patent_title(patent_title)
         normalized_title = strip_trailing_v_suffix(normalized_title) or normalized_title
         suffix = source_path.suffix or ".docx"
+
+        # Pre-process Markdown files before saving
+        if source_path.suffix.lower() in _ALLOWED_MD_EXTS:
+            try:
+                from .convert_markdown_to_docx_tool import _preprocess_markdown
+            except ImportError:
+                _preprocess_markdown = None  # type: ignore[misc]
+
+            if _preprocess_markdown is not None:
+                content = source_path.read_text(encoding="utf-8")
+                preprocessed = _preprocess_markdown(content)
+                source_path.write_text(preprocessed, encoding="utf-8")
+
         target_name = resolve_unique_versioned_filename(
             outputs_dir, normalized_title, suffix
         )
