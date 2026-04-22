@@ -5,8 +5,6 @@ import {
   FolderOpenIcon,
   GlobeIcon,
   LightbulbIcon,
-  ListTodoIcon,
-  MessageCircleQuestionMarkIcon,
   NotebookPenIcon,
   SearchIcon,
   SquareTerminalIcon,
@@ -204,13 +202,32 @@ function ToolCall({
   const { setOpen, autoOpen, autoSelect, selectedArtifact, select } =
     useArtifacts();
 
+  const friendlyToolLabels: Record<string, string> = {
+    web_search: t.toolCalls.searchForRelatedInfo,
+    image_search: t.toolCalls.searchForRelatedImages,
+    web_fetch: t.toolCalls.viewWebPage,
+    ls: t.toolCalls.listFolder,
+    read_file: t.toolCalls.readFile,
+    write_file: t.toolCalls.writeFile,
+    str_replace: t.toolCalls.writeFile,
+    bash: t.toolCalls.executeCommand,
+    ask_clarification: t.toolCalls.needYourHelp,
+    write_todos: t.toolCalls.writeTodos,
+    convert_markdown_to_docx: "转换为 Word 文档",
+  };
+
+  const label = friendlyToolLabels[name] ?? t.toolCalls.useTool(name);
+  const isSkillPath =
+    typeof (args as { path?: string }).path === "string" &&
+    (args as { path: string }).path.includes("/mnt/skills/");
+
   if (name === "web_search") {
-    let label: React.ReactNode = t.toolCalls.searchForRelatedInfo;
+    let displayLabel: React.ReactNode = label;
     if (typeof args.query === "string") {
-      label = t.toolCalls.searchOnWebFor(args.query);
+      displayLabel = t.toolCalls.searchOnWebFor(args.query);
     }
     return (
-      <ChainOfThoughtStep key={id} label={label} icon={SearchIcon}>
+      <ChainOfThoughtStep key={id} label={displayLabel} icon={SearchIcon}>
         {Array.isArray(result) && (
           <ChainOfThoughtSearchResults>
             {result.map((item) => (
@@ -225,9 +242,9 @@ function ToolCall({
       </ChainOfThoughtStep>
     );
   } else if (name === "image_search") {
-    let label: React.ReactNode = t.toolCalls.searchForRelatedImages;
+    let displayLabel: React.ReactNode = label;
     if (typeof args.query === "string") {
-      label = t.toolCalls.searchForRelatedImagesFor(args.query);
+      displayLabel = t.toolCalls.searchForRelatedImagesFor(args.query);
     }
     const results = (
       result as {
@@ -240,7 +257,7 @@ function ToolCall({
       }
     )?.results;
     return (
-      <ChainOfThoughtStep key={id} label={label} icon={SearchIcon}>
+      <ChainOfThoughtStep key={id} label={displayLabel} icon={SearchIcon}>
         {Array.isArray(results) && (
           <ChainOfThoughtSearchResults>
             {Array.isArray(results) &&
@@ -278,11 +295,7 @@ function ToolCall({
       }
     }
     return (
-      <ChainOfThoughtStep
-        key={id}
-        label={t.toolCalls.viewWebPage}
-        icon={GlobeIcon}
-      >
+      <ChainOfThoughtStep key={id} label={label} icon={GlobeIcon}>
         <ChainOfThoughtSearchResult>
           {url && (
             <a
@@ -298,15 +311,11 @@ function ToolCall({
       </ChainOfThoughtStep>
     );
   } else if (name === "ls") {
-    let description: string | undefined = (args as { description: string })
-      ?.description;
-    if (!description) {
-      description = t.toolCalls.listFolder;
-    }
+    const description = (args as { description?: string }).description;
     const path: string | undefined = (args as { path: string })?.path;
     return (
-      <ChainOfThoughtStep key={id} label={description} icon={FolderOpenIcon}>
-        {path && (
+      <ChainOfThoughtStep key={id} label={description ?? label} icon={FolderOpenIcon}>
+        {path && !isSkillPath && (
           <ChainOfThoughtSearchResult className="cursor-pointer">
             {path}
           </ChainOfThoughtSearchResult>
@@ -314,15 +323,11 @@ function ToolCall({
       </ChainOfThoughtStep>
     );
   } else if (name === "read_file") {
-    let description: string | undefined = (args as { description: string })
-      ?.description;
-    if (!description) {
-      description = t.toolCalls.readFile;
-    }
+    const description = (args as { description?: string }).description;
     const { path } = args as { path: string; content: string };
     return (
-      <ChainOfThoughtStep key={id} label={description} icon={BookOpenTextIcon}>
-        {path && (
+      <ChainOfThoughtStep key={id} label={description ?? label} icon={BookOpenTextIcon}>
+        {path && !isSkillPath && (
           <ChainOfThoughtSearchResult className="cursor-pointer">
             {path}
           </ChainOfThoughtSearchResult>
@@ -330,13 +335,9 @@ function ToolCall({
       </ChainOfThoughtStep>
     );
   } else if (name === "write_file" || name === "str_replace") {
-    let description: string | undefined = (args as { description: string })
-      ?.description;
-    if (!description) {
-      description = t.toolCalls.writeFile;
-    }
+    const description = (args as { description?: string }).description;
     const path: string | undefined = (args as { path: string })?.path;
-    if (isLoading && isLast && autoOpen && autoSelect && path && !result) {
+    if (isLoading && isLast && autoOpen && autoSelect && path && !result && !isSkillPath) {
       setTimeout(() => {
         const url = new URL(
           `write-file:${path}?message_id=${messageId}&tool_call_id=${id}`,
@@ -352,10 +353,11 @@ function ToolCall({
     return (
       <ChainOfThoughtStep
         key={id}
-        className="cursor-pointer"
-        label={description}
+        className={cn("cursor-pointer", isSkillPath && "cursor-default")}
+        label={description ?? label}
         icon={NotebookPenIcon}
         onClick={() => {
+          if (isSkillPath) return;
           select(
             new URL(
               `write-file:${path}?message_id=${messageId}&tool_call_id=${id}`,
@@ -364,7 +366,7 @@ function ToolCall({
           setOpen(true);
         }}
       >
-        {path && (
+        {path && !isSkillPath && (
           <ChainOfThoughtSearchResult className="cursor-pointer">
             {path}
           </ChainOfThoughtSearchResult>
@@ -372,16 +374,12 @@ function ToolCall({
       </ChainOfThoughtStep>
     );
   } else if (name === "bash") {
-    const description: string | undefined = (args as { description: string })
-      ?.description;
-    if (!description) {
-      return t.toolCalls.executeCommand;
-    }
+    const description = (args as { description?: string }).description;
     const command: string | undefined = (args as { command: string })?.command;
     return (
       <ChainOfThoughtStep
         key={id}
-        label={description}
+        label={description ?? label}
         icon={SquareTerminalIcon}
       >
         {command && (
@@ -394,29 +392,12 @@ function ToolCall({
         )}
       </ChainOfThoughtStep>
     );
-  } else if (name === "ask_clarification") {
-    return (
-      <ChainOfThoughtStep
-        key={id}
-        label={t.toolCalls.needYourHelp}
-        icon={MessageCircleQuestionMarkIcon}
-      ></ChainOfThoughtStep>
-    );
-  } else if (name === "write_todos") {
-    return (
-      <ChainOfThoughtStep
-        key={id}
-        label={t.toolCalls.writeTodos}
-        icon={ListTodoIcon}
-      ></ChainOfThoughtStep>
-    );
   } else {
-    const description: string | undefined = (args as { description: string })
-      ?.description;
+    const description = (args as { description?: string }).description;
     return (
       <ChainOfThoughtStep
         key={id}
-        label={description ?? t.toolCalls.useTool(name)}
+        label={description ?? label}
         icon={WrenchIcon}
       ></ChainOfThoughtStep>
     );

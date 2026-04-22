@@ -74,14 +74,17 @@ export const ArtifactTrigger = ({
         }
         const data = (await res.json()) as { paths?: string[] };
         const apiPaths = Array.isArray(data.paths) ? data.paths : [];
+        const filteredPaths = mergeArtifactPaths(apiPaths, fallback).filter(
+          (p) => p.toLowerCase().endsWith(".docx"),
+        );
         if (!cancelled) {
-          setPaths(mergeArtifactPaths(apiPaths, fallback));
+          setPaths(filteredPaths);
         }
       } catch {
         const message = t.artifactFiles.loadFailed;
         if (!cancelled) {
           setLoadError(message);
-          setPaths(mergeArtifactPaths([], fallback));
+          setPaths(mergeArtifactPaths([], fallback).filter((p) => p.toLowerCase().endsWith(".docx")));
         }
         toast.error(message);
       } finally {
