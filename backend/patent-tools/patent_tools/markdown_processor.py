@@ -142,8 +142,11 @@ def preprocess_markdown_to_html(content: str) -> str:
     content = auto_add_headings(content)
 
     # Step B: markdown → HTML (Python-Markdown library)
-    # Enable tables extension so pipe tables become <table> elements
-    html = markdown.markdown(content, extensions=["tables"])
+    # - tables: pipe tables → <table> for Word output
+    # - footnotes: [^1] references for prior art / data sources
+    # - sane_lists: robust handling of mixed nested/numbered lists in claims
+    # - def_list: definition lists for terminology glossaries
+    html = markdown.markdown(content, extensions=["tables", "footnotes", "sane_lists", "def_list"])
 
     # Step C: inject <sub> / <sup> tags into the HTML
 

@@ -327,3 +327,57 @@ def test_table_with_subscript_content():
     assert "<sub>2</sub>" in result
     assert "<sub>14</sub>" in result
 
+
+# ── Footnotes → <a class="footnote-ref"> ───────────────────────────────────
+
+
+def test_footnote_reference():
+    """[^1] should become a footnote reference link."""
+    content = """This is a statement[^1].
+
+[^1]: Source reference."""
+    result = preprocess_markdown_to_html(content)
+    assert "footnote" in result
+
+
+def test_footnote_definition():
+    """Footnote definitions should render with <section> or <ol>."""
+    content = """See claim[^2].
+
+[^2]: Prior art US1234567."""
+    result = preprocess_markdown_to_html(content)
+    assert "US1234567" in result
+
+
+# ── Definition lists → <dl>/<dt>/<dd> ──────────────────────────────────────
+
+
+def test_definition_list():
+    """Term: definition should become <dl>."""
+    content = """矫顽力
+: 抵抗外部磁场去磁的能力
+剩磁
+: 去除外部磁场后保留的磁感应强度"""
+    result = preprocess_markdown_to_html(content)
+    assert "<dl>" in result
+    assert "<dt>" in result
+    assert "<dd>" in result
+
+
+# ── Sane lists: numbered steps ─────────────────────────────────────────────
+
+
+def test_numbered_steps_with_sub_items():
+    """Claim-style numbered steps with sub-items should render as nested lists."""
+    content = """第一步
+1. Sub step a
+2. Sub step b
+
+第二步
+1. Another sub
+2. Another sub 2"""
+    result = preprocess_markdown_to_html(content)
+    # auto_add_headings wraps "第一步" as heading, sub-items become <ol>
+    assert "<ol>" in result
+    assert "Sub step a" in result
+
