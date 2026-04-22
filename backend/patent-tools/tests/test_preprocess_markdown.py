@@ -381,3 +381,41 @@ def test_numbered_steps_with_sub_items():
     assert "<ol>" in result
     assert "Sub step a" in result
 
+
+# ── Range separator insertion for adjacent values ──────────────────────────
+# When the LLM outputs multiple point values without ~, they end up
+# concatenated. This post-processing inserts ~ between them.
+
+
+def test_range_insert_wt_percent():
+    """27.6wt%29.0wt% → 27.6~29.0wt% (unit kept once at end)"""
+    result = preprocess_markdown_to_html("含量为27.6wt%29.0wt%的混合物")
+    assert "27.6~29.0wt%" in result
+
+
+def test_range_insert_temperature():
+    """400°C750°C → 400~750°C (unit kept once at end)"""
+    result = preprocess_markdown_to_html("温度400°C750°C")
+    assert "400~750°C" in result
+
+
+def test_range_insert_pressure():
+    """20100kPa should remain unchanged (single value, can't safely detect concat)."""
+    result = preprocess_markdown_to_html("压力20100kPa")
+    # Single values must never be split — this is safer than false positives.
+    assert "20100kPa" in result
+    assert "~" not in result
+
+
+def test_range_insert_celsius_symbol():
+    """400℃750℃ → 400~750℃ (unit kept once at end)"""
+    result = preprocess_markdown_to_html("温度400℃750℃")
+    assert "400~750℃" in result
+
+
+def test_range_insert_not_triggered_on_single_value():
+    """A single value like 1800ppm should never be split."""
+    result = preprocess_markdown_to_html("氧含量1800ppm")
+    assert "1800ppm" in result
+    assert "18~00ppm" not in result
+

@@ -168,4 +168,13 @@ def preprocess_markdown_to_html(content: str) -> str:
     # ^{-N} or {-N} (superscript notation) → <sup>N</sup>
     html = re.sub(r"\^?\{([-+]?[0-9]+)\}", r"<sup>\1</sup>", html)
 
+    # Insert ~ between adjacent numeric values that look like ranges.
+    # E.g. "27.6wt%29.0wt%" → "27.6~29.0wt%", "400°C750°C" → "400~750°C"
+    # Requires TWO number-unit sequences (lookahead finds second value after first unit).
+    # Single values like 1800ppm are NOT matched (no second value follows).
+    _RANGE_INSERT_RE = re.compile(
+        r"(\d+(?:\.\d+)?)([%°℃&#a-zA-Z]+)(?=\d+(?:\.\d+)?[%°℃&#a-zA-Z]+)"
+    )
+    html = _RANGE_INSERT_RE.sub(r"\1~", html)
+
     return html
