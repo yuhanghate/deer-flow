@@ -29,6 +29,7 @@ export const enUS: Translations = {
     close: "Close",
     more: "More",
     search: "Search",
+    loadMore: "Load more",
     download: "Patent Download",
     thinking: "Thinking",
     artifacts: "Artifacts",
@@ -246,6 +247,7 @@ export const enUS: Translations = {
     reportIssue: "Report a issue",
     contactUs: "Contact us",
     about: "About DeepSeek",
+    logout: "Log out",
   },
 
   // Conversation
@@ -334,6 +336,7 @@ export const enUS: Translations = {
     title: "Settings",
     description: "Adjust how DeepSeek looks and behaves for you.",
     sections: {
+      account: "Account",
       appearance: "Appearance",
       memory: "Memory",
       tools: "Tools",
