@@ -90,9 +90,9 @@ def get_available_tools(
     # Patent tools live in a separate package to avoid modifying upstream core.
     # Delayed import here to break circular dependency with deerflow.agents.
     try:
-        from patent_tools import convert_markdown_to_docx_tool, finalize_patent_output_tool
+        from patent_tools import convert_markdown_to_docx_tool, extract_json_disclosure_tool, finalize_patent_output_tool
 
-        builtin_tools.extend([convert_markdown_to_docx_tool, finalize_patent_output_tool])
+        builtin_tools.extend([convert_markdown_to_docx_tool, extract_json_disclosure_tool, finalize_patent_output_tool])
     except ImportError:
         logger.debug("patent_tools package not available, skipping patent tools")
     skill_evolution_config = getattr(config, "skill_evolution", None)

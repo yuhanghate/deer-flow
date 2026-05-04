@@ -71,7 +71,7 @@ export const enUS: Translations = {
   welcome: {
     greeting: "Hello, again!",
     description:
-      "Welcome to 🦌 DeepSeek, an open source super agent. With built-in and custom skills, DeepSeek helps you search on the web, analyze data, and generate artifacts like slides, web pages and do almost anything.",
+      "Welcome to  DeepSeek, an open source super agent. With built-in and custom skills, DeepSeek helps you search on the web, analyze data, and generate artifacts like slides, web pages and do almost anything.",
 
     createYourOwnSkill: "Create Your Own Skill",
     createYourOwnSkillDescription:
@@ -508,6 +508,48 @@ export const enUS: Translations = {
     acknowledge: {
       emptyTitle: "Acknowledgements",
       emptyDescription: "Credits and acknowledgements will show here.",
+    },
+  },
+
+  // Billing
+  billing: {
+    title: "Billing & Quota",
+    description: "Manage your token quota and subscription plan.",
+    quotaTitle: "Token Quota",
+    currentPlan: "Current Plan",
+    tokensRemaining: "Remaining",
+    tokensUsed: "Used",
+    tokensTotal: "Total",
+    spent: "Spent",
+    remaining: "Remaining",
+    inputTokens: "Input Tokens",
+    outputTokens: "Output Tokens",
+    planFree: "Free",
+    upgrade: "Upgrade",
+    upgradeNow: "Upgrade Plan",
+    recharge: "Recharge",
+    price: "Price",
+    buyNow: "Buy Now",
+    purchaseSuccess: "Purchase successful! Tokens have been credited to your account.",
+    purchaseFailed: "Purchase failed, please try again.",
+    quotaExhausted: "Token Quota Exhausted",
+    quotaExhaustedMessage: "Your free token quota has been used up. Please upgrade to continue using the service.",
+    plans: {
+      title: "Choose Your Plan",
+      description: "Select a token quota plan that fits your needs.",
+    },
+    orders: {
+      title: "Order History",
+      orderNo: "Order No.",
+      plan: "Plan",
+      amount: "Amount",
+      status: "Status",
+      createdAt: "Created",
+      empty: "No orders yet.",
+      statusPending: "Pending",
+      statusPaid: "Paid",
+      statusFailed: "Failed",
+      statusCancelled: "Cancelled",
     },
   },
 };

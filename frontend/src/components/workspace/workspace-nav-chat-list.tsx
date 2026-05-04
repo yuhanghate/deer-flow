@@ -26,7 +26,7 @@ export function WorkspaceNavChatList() {
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
-        <SidebarMenuItem>
+        <SidebarMenuItem className="hidden">
           <SidebarMenuButton
             isActive={pathname.startsWith("/workspace/agents")}
             asChild

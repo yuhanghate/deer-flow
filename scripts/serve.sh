@@ -159,7 +159,7 @@ fi
 
 if ! $SKIP_INSTALL; then
     echo "Syncing dependencies..."
-    (cd backend && uv sync --quiet) || { echo "✗ Backend dependency install failed"; exit 1; }
+    (cd backend && uv sync --quiet --extra postgres) || { echo "✗ Backend dependency install failed"; exit 1; }
     (cd frontend && pnpm install --silent) || { echo "✗ Frontend dependency install failed"; exit 1; }
     echo "✓ Dependencies synced"
 else

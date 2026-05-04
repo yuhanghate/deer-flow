@@ -1,4 +1,4 @@
-# 🦌 DeerFlow - 2.0
+#  DeerFlow - 2.0
 
 [English](./README.md) | [中文](./README_zh.md) | [日本語](./README_ja.md) | Français | [Русский](./README_ru.md)
 
@@ -44,7 +44,7 @@ DeerFlow intègre désormais le toolkit de recherche et de crawling intelligent 
 
 ## Table des matières
 
-- [🦌 DeerFlow - 2.0](#-deerflow---20)
+- [ DeerFlow - 2.0](#-deerflow---20)
   - [Site officiel](#site-officiel)
   - [InfoQuest](#infoquest)
   - [Table des matières](#table-des-matières)

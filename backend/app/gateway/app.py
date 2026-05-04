@@ -16,6 +16,7 @@ from app.gateway.routers import (
     artifacts,
     assistants_compat,
     auth,
+    billing,
     channels,
     feedback,
     mcp,
@@ -369,6 +370,9 @@ This gateway provides custom endpoints for models, MCP configuration, skills, an
 
     # Thread Runs API (LangGraph Platform-compatible runs lifecycle)
     app.include_router(thread_runs.router)
+
+    # Billing API (plans, quota, orders)
+    app.include_router(billing.router)
 
     # Stateless Runs API (stream/wait without a pre-existing thread)
     app.include_router(runs.router)

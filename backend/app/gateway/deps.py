@@ -24,6 +24,7 @@ from deerflow.runtime.runs.store.base import RunStore
 if TYPE_CHECKING:
     from app.gateway.auth.local_provider import LocalAuthProvider
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
+    from app.gateway.billing.service import BillingService
     from deerflow.persistence.thread_meta.base import ThreadMetaStore
 
 
@@ -91,6 +92,14 @@ async def langgraph_runtime(app: FastAPI) -> AsyncGenerator[None, None]:
         # RunManager with store backing for persistence
         app.state.run_manager = RunManager(store=app.state.run_store)
 
+        # 计费服务（使用数据库持久化时可用）
+        if sf is not None:
+            from app.gateway.billing.service import BillingService
+
+            app.state.billing_service = BillingService(sf)
+        else:
+            app.state.billing_service = None
+
         try:
             yield
         finally:
@@ -153,10 +162,10 @@ def get_run_context(request: Request) -> RunContext:
 
 
 # ---------------------------------------------------------------------------
-# Auth helpers (used by authz.py and auth middleware)
+# 认证辅助函数（供 authz.py 和认证中间件使用）
 # ---------------------------------------------------------------------------
 
-# Cached singletons to avoid repeated instantiation per request
+# 缓存单例，避免每次请求重复实例化
 _cached_local_provider: LocalAuthProvider | None = None
 _cached_repo: SQLiteUserRepository | None = None
 
@@ -243,3 +252,11 @@ async def get_current_user(request: Request) -> str | None:
     """
     user = await get_optional_user_from_request(request)
     return str(user.id) if user else None
+
+
+def get_billing_service(request: Request) -> BillingService:
+    """返回计费服务实例，如果不可用则返回 503。"""
+    svc = getattr(request.app.state, "billing_service", None)
+    if svc is None:
+        raise HTTPException(status_code=503, detail="计费服务不可用")
+    return svc

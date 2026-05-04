@@ -20,6 +20,7 @@ import { ThreadContext } from "@/components/workspace/messages/context";
 import { ThreadTitle } from "@/components/workspace/thread-title";
 import { TodoList } from "@/components/workspace/todo-list";
 import { TokenUsageIndicator } from "@/components/workspace/token-usage-indicator";
+import { QuotaBar } from "@/components/workspace/billing/quota-bar";
 import { Tooltip } from "@/components/workspace/tooltip";
 import { useAgent } from "@/core/agents";
 import { useI18n } from "@/core/i18n/hooks";
@@ -34,6 +35,7 @@ import { cn } from "@/lib/utils";
 export default function AgentChatPage() {
   const { t } = useI18n();
   const [showFollowups, setShowFollowups] = useState(false);
+  const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMock = searchParams.get("mock") === "true";
@@ -71,6 +73,7 @@ export default function AgentChatPage() {
       );
     },
     onFinish: (state) => {
+      setQuotaRefreshKey((k) => k + 1);
       if (document.hidden || !document.hasFocus()) {
         let body = "Conversation finished";
         const lastMessage = state.messages[state.messages.length - 1];
@@ -142,6 +145,7 @@ export default function AgentChatPage() {
                   <PlusSquare /> {t.agents.newChat}
                 </Button>
               </Tooltip>
+              <QuotaBar refreshTrigger={quotaRefreshKey} />
               <TokenUsageIndicator
                 enabled={tokenUsageEnabled}
                 messages={thread.messages}

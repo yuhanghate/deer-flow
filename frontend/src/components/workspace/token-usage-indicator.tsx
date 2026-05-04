@@ -71,9 +71,9 @@ export function TokenUsageIndicator({
           <ChevronDownIcon className="size-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="bottom" align="end" className="w-80">
+      <DropdownMenuContent side="bottom" align="end" className=" w-80">
         <DropdownMenuLabel>{t.tokenUsage.title}</DropdownMenuLabel>
-        <div className="px-2 py-1 text-xs">
+        <div className=" px-2 py-1 text-xs">
           {usage ? (
             <div className="space-y-1">
               <div className="flex justify-between gap-4">
@@ -103,9 +103,10 @@ export function TokenUsageIndicator({
             </div>
           )}
         </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>{t.tokenUsage.view}</DropdownMenuLabel>
+        <DropdownMenuSeparator className="hidden"/>
+        <DropdownMenuLabel className="hidden" >{t.tokenUsage.view}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
+        className="hidden"
           value={preset}
           onValueChange={(value) =>
             onPreferencesChange(
@@ -119,7 +120,7 @@ export function TokenUsageIndicator({
             const translationKey = presetKeyToTranslationKey(value);
             return (
               <DropdownMenuRadioItem key={value} value={value}>
-                <div className="grid gap-0.5">
+                <div className=" grid gap-0.5">
                   <span>{t.tokenUsage.presets[translationKey]}</span>
                   <span className="text-muted-foreground text-xs">
                     {t.tokenUsage.presetDescriptions[translationKey]}
@@ -129,8 +130,8 @@ export function TokenUsageIndicator({
             );
           })}
         </DropdownMenuRadioGroup>
-        <DropdownMenuSeparator />
-        <div className="text-muted-foreground px-2 py-2 text-xs leading-relaxed">
+        <DropdownMenuSeparator className="hidden"/>
+        <div className="hidden text-muted-foreground px-2 py-2 text-xs leading-relaxed">
           {t.tokenUsage.note}
         </div>
       </DropdownMenuContent>

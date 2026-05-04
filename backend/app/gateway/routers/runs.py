@@ -15,7 +15,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
 from app.gateway.authz import require_permission
-from app.gateway.deps import get_checkpointer, get_feedback_repo, get_run_event_store, get_run_manager, get_run_store, get_stream_bridge
+from app.gateway.deps import get_billing_service, get_checkpointer, get_current_user, get_feedback_repo, get_run_event_store, get_run_manager, get_run_store, get_stream_bridge
 from app.gateway.routers.thread_runs import RunCreateRequest
 from app.gateway.services import sse_consumer, start_run
 from deerflow.runtime import serialize_channel_values
@@ -34,12 +34,17 @@ def _resolve_thread_id(body: RunCreateRequest) -> str:
 
 @router.post("/stream")
 async def stateless_stream(body: RunCreateRequest, request: Request) -> StreamingResponse:
-    """Create a run and stream events via SSE.
+    """创建对话并通过 SSE 流式返回事件。
 
-    If ``config.configurable.thread_id`` is provided, the run is created
-    on the given thread so that conversation history is preserved.
-    Otherwise a new temporary thread is created.
+    如果提供了 ``config.configurable.thread_id``，则在该对话上创建运行，
+    以保留历史消息；否则创建一个新的临时对话。
     """
+    user_id = await get_current_user(request)
+    if user_id is not None:
+        billing = get_billing_service(request)
+        await billing.ensure_default_quota(user_id)
+        if not await billing.has_quota(user_id):
+            raise HTTPException(status_code=402, detail="Token 额度已用完，请充值后继续使用。")
     thread_id = _resolve_thread_id(body)
     bridge = get_stream_bridge(request)
     run_mgr = get_run_manager(request)
@@ -59,12 +64,17 @@ async def stateless_stream(body: RunCreateRequest, request: Request) -> Streamin
 
 @router.post("/wait", response_model=dict)
 async def stateless_wait(body: RunCreateRequest, request: Request) -> dict:
-    """Create a run and block until completion.
+    """创建对话并阻塞直到完成，返回最终状态。
 
-    If ``config.configurable.thread_id`` is provided, the run is created
-    on the given thread so that conversation history is preserved.
-    Otherwise a new temporary thread is created.
+    如果提供了 ``config.configurable.thread_id``，则在该对话上创建运行，
+    以保留历史消息；否则创建一个新的临时对话。
     """
+    user_id = await get_current_user(request)
+    if user_id is not None:
+        billing = get_billing_service(request)
+        await billing.ensure_default_quota(user_id)
+        if not await billing.has_quota(user_id):
+            raise HTTPException(status_code=402, detail="Token 额度已用完，请充值后继续使用。")
     thread_id = _resolve_thread_id(body)
     record = await start_run(body, thread_id, request)
 

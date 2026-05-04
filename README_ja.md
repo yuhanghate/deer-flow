@@ -1,4 +1,4 @@
-# 🦌 DeerFlow - 2.0
+#  DeerFlow - 2.0
 
 [English](./README.md) | [中文](./README_zh.md) | 日本語 | [Français](./README_fr.md) | [Русский](./README_ru.md)
 
@@ -44,7 +44,7 @@ DeerFlowは、BytePlusが独自に開発したインテリジェント検索・�
 
 ## 目次
 
-- [🦌 DeerFlow - 2.0](#-deerflow---20)
+- [ DeerFlow - 2.0](#-deerflow---20)
   - [公式ウェブサイト](#公式ウェブサイト)
   - [InfoQuest](#infoquest)
   - [目次](#目次)

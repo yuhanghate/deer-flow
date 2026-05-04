@@ -38,6 +38,7 @@ _PUBLIC_EXACT_PATHS: frozenset[str] = frozenset(
         "/api/v1/auth/logout",
         "/api/v1/auth/setup-status",
         "/api/v1/auth/initialize",
+        "/api/billing/plans",
     }
 )
 

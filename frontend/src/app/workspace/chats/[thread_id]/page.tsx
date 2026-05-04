@@ -20,6 +20,7 @@ import { ThreadContext } from "@/components/workspace/messages/context";
 import { ThreadTitle } from "@/components/workspace/thread-title";
 import { TodoList } from "@/components/workspace/todo-list";
 import { TokenUsageIndicator } from "@/components/workspace/token-usage-indicator";
+import { QuotaBar } from "@/components/workspace/billing/quota-bar";
 import { Welcome } from "@/components/workspace/welcome";
 import { useI18n } from "@/core/i18n/hooks";
 import { useModels } from "@/core/models/hooks";
@@ -33,6 +34,7 @@ import { cn } from "@/lib/utils";
 export default function ChatPage() {
   const { t } = useI18n();
   const [showFollowups, setShowFollowups] = useState(false);
+  const [quotaRefreshKey, setQuotaRefreshKey] = useState(0);
   const { threadId, setThreadId, isNewThread, setIsNewThread, isMock } =
     useThreadChat();
   const [settings, setSettings] = useThreadSettings(threadId);
@@ -69,6 +71,7 @@ export default function ChatPage() {
       history.replaceState(null, "", `/workspace/chats/${createdThreadId}`);
     },
     onFinish: (state) => {
+      setQuotaRefreshKey((k) => k + 1);
       if (document.hidden || !document.hasFocus()) {
         let body = "Conversation finished";
         const lastMessage = state.messages.at(-1);
@@ -120,6 +123,7 @@ export default function ChatPage() {
               <ThreadTitle threadId={threadId} thread={thread} />
             </div>
             <div className="flex items-center gap-2">
+              <QuotaBar key={threadId} refreshTrigger={quotaRefreshKey} />
               <TokenUsageIndicator
                 enabled={tokenUsageEnabled}
                 messages={thread.messages}

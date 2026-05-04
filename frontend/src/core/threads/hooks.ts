@@ -75,6 +75,33 @@ function mergeMessages(
   ];
 }
 
+const QUOTA_EXHAUSTED_EVENT = "deerflow:quota-exhausted";
+
+/** Dispatch a custom event to trigger the upgrade dialog. */
+function triggerQuotaExhaustedDialog() {
+  window.dispatchEvent(new Event(QUOTA_EXHAUSTED_EVENT));
+}
+
+/** Check if an error is an HTTP 402 (payment required / quota exhausted). */
+function isQuotaExhaustedError(error: unknown): boolean {
+  if (typeof error === "string" && error.includes("402")) return true;
+  if (error instanceof Error && error.message.includes("402")) return true;
+  if (typeof error === "object" && error !== null) {
+    // Check various error shapes from the stream client
+    const status = Reflect.get(error, "status") ?? Reflect.get(error, "statusCode");
+    if (status === 402) return true;
+    const nested = Reflect.get(error, "error");
+    if (typeof nested === "object" && nested !== null) {
+      const nestedStatus = Reflect.get(nested, "status") ?? Reflect.get(nested, "statusCode");
+      if (nestedStatus === 402) return true;
+    }
+    // Check detail string for quota-related messages
+    const detail = Reflect.get(error, "detail");
+    if (typeof detail === "string" && (detail.includes("额度") || detail.includes("quota") || detail.includes("402"))) return true;
+  }
+  return false;
+}
+
 function getStreamErrorMessage(error: unknown): string {
   if (typeof error === "string" && error.trim()) {
     return error;
@@ -270,6 +297,10 @@ export function useThreadStream({
     },
     onError(error) {
       setOptimisticMessages([]);
+      if (isQuotaExhaustedError(error)) {
+        triggerQuotaExhaustedDialog();
+        return;
+      }
       toast.error(getStreamErrorMessage(error));
     },
     onFinish(state) {

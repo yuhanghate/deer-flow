@@ -17,7 +17,7 @@ from typing import Any
 from fastapi import HTTPException, Request
 from langchain_core.messages import HumanMessage
 
-from app.gateway.deps import get_run_context, get_run_manager, get_stream_bridge
+from app.gateway.deps import get_current_user, get_run_context, get_run_manager, get_stream_bridge
 from app.gateway.utils import sanitize_log_param
 from deerflow.runtime import (
     END_SENTINEL,
@@ -308,9 +308,18 @@ async def start_run(
     )
     record.task = task
 
-    # Title sync is handled by worker.py's finally block which reads the
-    # title from the checkpoint and calls thread_store.update_display_name
-    # after the run completes.
+    # Inject billing context for real-time quota deduction in TokenUsageMiddleware.
+    billing = getattr(request.app.state, "billing_service", None)
+    user_id = await get_current_user(request)
+    if billing is not None and user_id is not None:
+        target_ctx = config.get("context")
+        if not isinstance(target_ctx, dict):
+            target_ctx = config.setdefault("context", {})
+        target_ctx["user_id"] = user_id
+        target_ctx["billing_service"] = billing
+
+    # 标题同步由 worker.py 的 finally 块处理：它从 checkpoint 读取标题
+    # 并在对话完成后调用 thread_store.update_display_name。
 
     return record
 

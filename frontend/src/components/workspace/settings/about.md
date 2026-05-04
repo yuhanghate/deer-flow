@@ -1,4 +1,4 @@
-# 🦌 [About DeerFlow 2.0](https://github.com/bytedance/deer-flow)
+#  [About DeerFlow 2.0](https://github.com/bytedance/deer-flow)
 
 > **From Open Source, Back to Open Source**
 

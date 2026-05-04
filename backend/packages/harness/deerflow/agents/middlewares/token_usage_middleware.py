@@ -1,7 +1,8 @@
-"""Middleware for logging token usage and annotating step attribution."""
+"""Middleware for logging token usage, annotating step attribution, and real-time billing deduction."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections import defaultdict
 from typing import Any, override
@@ -15,6 +16,9 @@ from langgraph.runtime import Runtime
 logger = logging.getLogger(__name__)
 
 TOKEN_USAGE_ATTRIBUTION_KEY = "token_usage_attribution"
+
+# Sentinel to prevent duplicate billing deductions for the same message.
+_BILLED_IDS_KEY = "_billed_message_ids"
 
 
 def _string_arg(value: Any) -> str | None:
@@ -254,9 +258,9 @@ def _build_attribution(message: AIMessage, todos: list[Todo]) -> dict[str, Any]:
 
 
 class TokenUsageMiddleware(AgentMiddleware):
-    """Logs token usage from model responses and annotates the AI step."""
+    """Logs token usage from model responses, annotates the AI step, and deducts quota in real-time."""
 
-    def _apply(self, state: AgentState) -> dict | None:
+    def _apply(self, state: AgentState, runtime: Runtime) -> dict | None:
         messages = state.get("messages", [])
         if not messages:
             return None
@@ -283,12 +287,73 @@ class TokenUsageMiddleware(AgentMiddleware):
 
         additional_kwargs[TOKEN_USAGE_ATTRIBUTION_KEY] = attribution
         updated_msg = last.model_copy(update={"additional_kwargs": additional_kwargs})
+
+        # Real-time billing deduction — fire-and-forget, non-blocking
+        self._deduct_quota_now(state, runtime, usage)
+
         return {"messages": [updated_msg]}
+
+    def _deduct_quota_now(self, state: AgentState, runtime: Runtime, usage: dict | None) -> None:
+        """Fire-and-forget real-time quota deduction per LLM response.
+
+        Deduplicates by message id so each AIMessage is billed exactly once.
+        """
+        if usage is None:
+            return
+
+        input_tk = usage.get("input_tokens", 0) or 0
+        output_tk = usage.get("output_tokens", 0) or 0
+        if input_tk <= 0 and output_tk <= 0:
+            return
+
+        # Resolve user_id and run_id from runtime context
+        ctx = runtime.context if hasattr(runtime, "context") else {}
+        if not isinstance(ctx, dict):
+            return
+
+        user_id = ctx.get("user_id")
+        run_id = ctx.get("run_id")
+        if not user_id or not run_id:
+            return
+
+        # Get billing service from context (injected by services.py start_run)
+        billing = ctx.get("billing_service")
+        if billing is None:
+            return
+
+        # Deduplicate: each message id billed at most once
+        billed_ids: set[str] = state.get(_BILLED_IDS_KEY) or set()
+        messages_list = state.get("messages", [])
+        msg_id = getattr(messages_list[-1], "id", None) if messages_list else None
+        if msg_id and msg_id in billed_ids:
+            return
+
+        # Mark as billed immediately (optimistic — even if deduction fails)
+        if msg_id:
+            billed_ids.add(msg_id)
+
+        # Fire-and-forget async deduction
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return  # No event loop, skip
+
+        async def _do_deduct():
+            try:
+                await billing.deduct_quota(user_id, run_id, input_tk, output_tk)
+            except Exception:
+                logger.exception("Real-time quota deduction failed for run %s (non-fatal)", run_id)
+
+        loop.create_task(_do_deduct())
+
+        # Store billed_ids back into state so subsequent turns see it
+        if msg_id:
+            state[_BILLED_IDS_KEY] = billed_ids
 
     @override
     def after_model(self, state: AgentState, runtime: Runtime) -> dict | None:
-        return self._apply(state)
+        return self._apply(state, runtime)
 
     @override
     async def aafter_model(self, state: AgentState, runtime: Runtime) -> dict | None:
-        return self._apply(state)
+        return self._apply(state, runtime)

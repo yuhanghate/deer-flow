@@ -424,4 +424,46 @@ export interface Translations {
       emptyDescription: string;
     };
   };
+
+  // Billing
+  billing: {
+    title: string;
+    description: string;
+    quotaTitle: string;
+    currentPlan: string;
+    tokensRemaining: string;
+    tokensUsed: string;
+    tokensTotal: string;
+    spent: string;
+    remaining: string;
+    inputTokens: string;
+    outputTokens: string;
+    planFree: string;
+    upgrade: string;
+    upgradeNow: string;
+    recharge: string;
+    price: string;
+    buyNow: string;
+    purchaseSuccess: string;
+    purchaseFailed: string;
+    quotaExhausted: string;
+    quotaExhaustedMessage: string;
+    plans: {
+      title: string;
+      description: string;
+    };
+    orders: {
+      title: string;
+      orderNo: string;
+      plan: string;
+      amount: string;
+      status: string;
+      createdAt: string;
+      empty: string;
+      statusPending: string;
+      statusPaid: string;
+      statusFailed: string;
+      statusCancelled: string;
+    };
+  };
 }

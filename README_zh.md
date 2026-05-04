@@ -1,4 +1,4 @@
-# 🦌 DeerFlow - 2.0
+#  DeerFlow - 2.0
 
 [English](./README.md) | 中文 | [日本語](./README_ja.md) | [Français](./README_fr.md) | [Русский](./README_ru.md)
 
@@ -32,7 +32,7 @@ https://github.com/user-attachments/assets/a8bcadc4-e040-4cf2-8fda-dd768b999c18
 
 ## 目录
 
-- [🦌 DeerFlow - 2.0](#-deerflow---20)
+- [ DeerFlow - 2.0](#-deerflow---20)
   - [官网](#官网)
   - [InfoQuest](#infoquest)
   - [目录](#目录)

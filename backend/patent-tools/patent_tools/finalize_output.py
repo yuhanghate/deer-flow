@@ -12,7 +12,7 @@ from langgraph.types import Command
 from langgraph.typing import ContextT
 
 from deerflow.agents.thread_state import ThreadState
-from deerflow.config.paths import VIRTUAL_PATH_PREFIX, get_paths
+from deerflow.config.paths import VIRTUAL_PATH_PREFIX
 
 from .markdown_processor import preprocess_markdown_to_html
 from .output_versioning import resolve_unique_versioned_filename, strip_trailing_v_suffix
@@ -63,7 +63,26 @@ def _resolve_source_path(runtime: ToolRuntime[ContextT, ThreadState], source_fil
     stripped = source_filepath.lstrip("/")
     virtual_prefix = VIRTUAL_PATH_PREFIX.lstrip("/")
     if stripped == virtual_prefix or stripped.startswith(virtual_prefix + "/"):
-        source_path = get_paths().resolve_virtual_path(thread_id, source_filepath)
+        suffix = stripped[len(virtual_prefix) :].lstrip("/")
+        segment_to_host = {}
+        for segment, host in [
+            ("workspace", workspace_path),
+            ("uploads", uploads_path),
+            ("outputs", outputs_path),
+        ]:
+            if host:
+                segment_to_host[segment] = host
+        if suffix:
+            top_segment = suffix.split("/")[0]
+            if top_segment in segment_to_host:
+                source_path = Path(segment_to_host[top_segment]) / "/".join(suffix.split("/")[1:])
+            else:
+                any_host = next(iter(segment_to_host.values()))
+                user_data_root = str(Path(any_host).parent)
+                source_path = Path(user_data_root) / suffix
+        else:
+            any_host = next(iter(segment_to_host.values()))
+            source_path = Path(Path(any_host).parent)
     else:
         source_path = Path(source_filepath).expanduser().resolve()
 

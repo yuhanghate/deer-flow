@@ -3,6 +3,7 @@
 import {
   BugIcon,
   ChevronsUpDown,
+  CoinsIcon,
   GlobeIcon,
   InfoIcon,
   MailIcon,
@@ -11,6 +12,13 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +33,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { PricingSheet } from "@/components/workspace/billing";
 import { useI18n } from "@/core/i18n/hooks";
 
 import { GithubIcon } from "./github-icon";
@@ -55,6 +64,7 @@ export function WorkspaceNavMenu() {
   const [settingsDefaultSection, setSettingsDefaultSection] = useState<
     "appearance" | "memory" | "tools" | "skills" | "notification" | "about"
   >("appearance");
+  const [billingOpen, setBillingOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { open: isSidebarOpen } = useSidebar();
   const { t } = useI18n();
@@ -70,6 +80,18 @@ export function WorkspaceNavMenu() {
         onOpenChange={setSettingsOpen}
         defaultSection={settingsDefaultSection}
       />
+      <Dialog open={billingOpen} onOpenChange={setBillingOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CoinsIcon size={18} />
+              {t.billing.title}
+            </DialogTitle>
+            <DialogDescription>{t.billing.description}</DialogDescription>
+          </DialogHeader>
+          <PricingSheet onPurchaseComplete={() => setBillingOpen(false)} />
+        </DialogContent>
+      </Dialog>
       <SidebarMenu className="w-full">
         <SidebarMenuItem>
           {mounted ? (
@@ -97,8 +119,15 @@ export function WorkspaceNavMenu() {
                     <Settings2Icon />
                     {t.common.settings}
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setBillingOpen(true)}
+                  >
+                    <CoinsIcon />
+                    {t.billing.title}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="hidden" />
                   <a
+                    className="hidden"
                     href="https://deerflow.tech/"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -109,6 +138,7 @@ export function WorkspaceNavMenu() {
                     </DropdownMenuItem>
                   </a>
                   <a
+                    className="hidden"
                     href="https://github.com/bytedance/deer-flow"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -118,26 +148,28 @@ export function WorkspaceNavMenu() {
                       {t.workspace.visitGithub}
                     </DropdownMenuItem>
                   </a>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="hidden" />
                   <a
                     href="https://github.com/bytedance/deer-flow/issues"
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="hidden"
                   >
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className="hidden">
                       <BugIcon />
                       {t.workspace.reportIssue}
                     </DropdownMenuItem>
                   </a>
-                  <a href="mailto:support@deerflow.tech">
+                  <a className="hidden" href="mailto:support@deerflow.tech">
                     <DropdownMenuItem>
                       <MailIcon />
                       {t.workspace.contactUs}
                     </DropdownMenuItem>
                   </a>
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="hidden" />
                 <DropdownMenuItem
+                  className="hidden"
                   onClick={() => {
                     setSettingsDefaultSection("about");
                     setSettingsOpen(true);

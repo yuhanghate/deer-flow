@@ -519,10 +519,10 @@ export function InputBox({
                   context.mode === "pro" ||
                   context.mode === "ultra"
                     ? context.mode
-                    : "flash"
+                    : "pro"
                 }
               >
-                <PromptInputActionMenuTrigger className="gap-1! px-2!">
+                <PromptInputActionMenuTrigger className="hidden gap-1! px-2!">
                   <div>
                     {context.mode === "flash" && <ZapIcon className="size-3" />}
                     {context.mode === "thinking" && (

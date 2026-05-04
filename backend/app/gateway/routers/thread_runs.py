@@ -20,7 +20,7 @@ from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.gateway.authz import require_permission
-from app.gateway.deps import get_checkpointer, get_current_user, get_feedback_repo, get_run_event_store, get_run_manager, get_run_store, get_stream_bridge
+from app.gateway.deps import get_billing_service, get_checkpointer, get_current_user, get_feedback_repo, get_run_event_store, get_run_manager, get_run_store, get_stream_bridge
 from app.gateway.services import sse_consumer, start_run
 from deerflow.runtime import RunRecord, serialize_channel_values
 
@@ -95,7 +95,13 @@ def _record_to_response(record: RunRecord) -> RunResponse:
 @router.post("/{thread_id}/runs", response_model=RunResponse)
 @require_permission("runs", "create", owner_check=True, require_existing=True)
 async def create_run(thread_id: str, body: RunCreateRequest, request: Request) -> RunResponse:
-    """Create a background run (returns immediately)."""
+    """创建后台对话（立即返回）。"""
+    user_id = await get_current_user(request)
+    if user_id is not None:
+        billing = get_billing_service(request)
+        await billing.ensure_default_quota(user_id)
+        if not await billing.has_quota(user_id):
+            raise HTTPException(status_code=402, detail="Token 额度已用完，请充值后继续使用。")
     record = await start_run(body, thread_id, request)
     return _record_to_response(record)
 
@@ -103,12 +109,17 @@ async def create_run(thread_id: str, body: RunCreateRequest, request: Request) -
 @router.post("/{thread_id}/runs/stream")
 @require_permission("runs", "create", owner_check=True, require_existing=True)
 async def stream_run(thread_id: str, body: RunCreateRequest, request: Request) -> StreamingResponse:
-    """Create a run and stream events via SSE.
+    """创建对话并通过 SSE 流式返回事件。
 
-    The response includes a ``Content-Location`` header with the run's
-    resource URL, matching the LangGraph Platform protocol.  The
-    ``useStream`` React hook uses this to extract run metadata.
+    响应头包含 ``Content-Location`` 指向对话的资源 URL，
+    ``useStream`` React hook 会用它来提取对话元数据。
     """
+    user_id = await get_current_user(request)
+    if user_id is not None:
+        billing = get_billing_service(request)
+        await billing.ensure_default_quota(user_id)
+        if not await billing.has_quota(user_id):
+            raise HTTPException(status_code=402, detail="Token 额度已用完，请充值后继续使用。")
     bridge = get_stream_bridge(request)
     run_mgr = get_run_manager(request)
     record = await start_run(body, thread_id, request)
@@ -131,7 +142,13 @@ async def stream_run(thread_id: str, body: RunCreateRequest, request: Request) -
 @router.post("/{thread_id}/runs/wait", response_model=dict)
 @require_permission("runs", "create", owner_check=True, require_existing=True)
 async def wait_run(thread_id: str, body: RunCreateRequest, request: Request) -> dict:
-    """Create a run and block until it completes, returning the final state."""
+    """创建对话并阻塞直到完成，返回最终状态。"""
+    user_id = await get_current_user(request)
+    if user_id is not None:
+        billing = get_billing_service(request)
+        await billing.ensure_default_quota(user_id)
+        if not await billing.has_quota(user_id):
+            raise HTTPException(status_code=402, detail="Token 额度已用完，请充值后继续使用。")
     record = await start_run(body, thread_id, request)
 
     if record.task is not None:

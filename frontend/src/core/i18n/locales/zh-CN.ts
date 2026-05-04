@@ -71,7 +71,7 @@ export const zhCN: Translations = {
   welcome: {
     greeting: "你好，欢迎回来！",
     description:
-      "欢迎使用 🦌 DeepSeek，一个完全开源的超级智能体。通过内置和自定义的 Skills，\nDeepSeek 可以帮你搜索网络、分析数据，还能为你生成幻灯片、\n图片、视频、播客及网页等，几乎可以做任何事情。",
+      "欢迎使用  DeepSeek，一个完全开源的超级智能体。通过内置和自定义的 Skills，\nDeepSeek 可以帮你搜索网络、分析数据，还能为你生成幻灯片、\n图片、视频、播客及网页等，几乎可以做任何事情。",
 
     createYourOwnSkill: "创建你自己的 Agent SKill",
     createYourOwnSkillDescription:
@@ -488,6 +488,48 @@ export const zhCN: Translations = {
     acknowledge: {
       emptyTitle: "致谢",
       emptyDescription: "相关的致谢信息会展示在这里。",
+    },
+  },
+
+  // Billing
+  billing: {
+    title: "账单与额度",
+    description: "管理你的 Token 额度和订阅方案。",
+    quotaTitle: "Token 额度",
+    currentPlan: "当前方案",
+    tokensRemaining: "剩余",
+    tokensUsed: "已用",
+    tokensTotal: "总额",
+    spent: "已花费",
+    remaining: "剩余",
+    inputTokens: "输入 Tokens",
+    outputTokens: "输出 Tokens",
+    planFree: "免费",
+    upgrade: "升级",
+    upgradeNow: "升级方案",
+    recharge: "充值",
+    price: "价格",
+    buyNow: "立即购买",
+    purchaseSuccess: "购买成功！Token 已充值到你的账户。",
+    purchaseFailed: "购买失败，请重试。",
+    quotaExhausted: "Token 额度已用完",
+    quotaExhaustedMessage: "你的免费 Token 额度已用完，请升级方案后继续使用。",
+    plans: {
+      title: "选择你的方案",
+      description: "选择适合你的 Token 额度方案。",
+    },
+    orders: {
+      title: "订单历史",
+      orderNo: "订单号",
+      plan: "方案",
+      amount: "金额",
+      status: "状态",
+      createdAt: "创建时间",
+      empty: "暂无订单。",
+      statusPending: "待支付",
+      statusPaid: "已支付",
+      statusFailed: "失败",
+      statusCancelled: "已取消",
     },
   },
 };
