@@ -21,6 +21,11 @@ class AuthErrorCode(StrEnum):
     PROVIDER_NOT_FOUND = "provider_not_found"
     NOT_AUTHENTICATED = "not_authenticated"
     SYSTEM_ALREADY_INITIALIZED = "system_already_initialized"
+    VERIFICATION_CODE_REQUIRED = "verification_code_required"
+    VERIFICATION_CODE_EXPIRED = "verification_code_expired"
+    VERIFICATION_CODE_INVALID = "verification_code_invalid"
+    VERIFICATION_CODE_RATE_LIMITED = "verification_code_rate_limited"
+    VERIFICATION_CODE_SEND_FAILED = "verification_code_send_failed"
 
 
 class TokenError(StrEnum):

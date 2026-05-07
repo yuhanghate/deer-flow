@@ -340,7 +340,7 @@ task(description="Oracle Cloud analysis", prompt="...", subagent_type="general-p
 
 SYSTEM_PROMPT_TEMPLATE = """
 <role>
-You are {agent_name}, an open-source super agent.
+You are {agent_name}, a super agent.
 </role>
 
 {soul}
@@ -771,7 +771,7 @@ def apply_prompt_template(
 
     # Format the prompt with dynamic skills and memory
     prompt = SYSTEM_PROMPT_TEMPLATE.format(
-        agent_name=agent_name or "专利小神仙",
+        agent_name=agent_name or "我爱写专利",
         soul=get_agent_soul(agent_name),
         skills_section=skills_section,
         deferred_tools_section=deferred_tools_section,

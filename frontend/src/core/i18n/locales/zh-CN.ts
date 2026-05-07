@@ -1,10 +1,7 @@
 ﻿import {
   CompassIcon,
-  GraduationCapIcon,
   ImageIcon,
-  MicroscopeIcon,
   PenLineIcon,
-  ShapesIcon,
   SparklesIcon,
   VideoIcon,
 } from "lucide-react";
@@ -71,11 +68,11 @@ export const zhCN: Translations = {
   welcome: {
     greeting: "你好，欢迎回来！",
     description:
-      "欢迎使用  DeepSeek，一个完全开源的超级智能体。通过内置和自定义的 Skills，\nDeepSeek 可以帮你搜索网络、分析数据，还能为你生成幻灯片、\n图片、视频、播客及网页等，几乎可以做任何事情。",
+      "欢迎使用 专利撰写助手。内置专利交底书解析、权利要求生成、技术特征提取等专属技能，\n高效辅助您完成专利撰写全流程，从交底书整理到权利要求布局，让专利撰写更轻松。",
 
     createYourOwnSkill: "创建你自己的 Agent SKill",
     createYourOwnSkillDescription:
-      "创建你的 Agent Skill 来释放 DeepSeek 的潜力。通过自定义技能，DeepSeek\n可以帮你搜索网络、分析数据，还能为你生成幻灯片、\n网页等作品，几乎可以做任何事情。",
+      "创建你的 Agent Skill 来释放 PatentPencil 的潜力。通过自定义技能，PatentPencil\n可以帮你搜索网络、分析数据，还能为你生成幻灯片、\n网页等作品，几乎可以做任何事情。",
   },
 
   // Clipboard
@@ -89,7 +86,7 @@ export const zhCN: Translations = {
   // Input Box
   inputBox: {
     placeholder:
-      "今天需要我帮您撰写什么专利？\n如需撰写新专利，建议开启新对话，结构更清晰、内容更规整。",
+      "今天需要我帮您撰写什么专利？\n如需撰写新专利，建议开启新对话专利，结构更清晰、内容更规整。",
     createSkillPrompt:
       "我们一起用 skill-creator 技能来创建一个技能吧。先问问我希望这个技能能做什么。",
     addAttachments: "添加附件",
@@ -122,24 +119,10 @@ export const zhCN: Translations = {
     followupConfirmReplace: "替换并发送",
     suggestions: [
       {
-        suggestion: "写作",
-        prompt: "撰写一篇关于[主题]的博客文章",
+        suggestion: "交底转专利",
+        prompt:
+          "请根据我上传的交底书内容，生成一份完整的专利申请文件（Word格式），包括技术领域、背景技术、发明内容、附图说明和具体实施方式。",
         icon: PenLineIcon,
-      },
-      {
-        suggestion: "研究",
-        prompt: "深入浅出的研究一下[主题]，并总结发现。",
-        icon: MicroscopeIcon,
-      },
-      {
-        suggestion: "收集",
-        prompt: "从[来源]收集数据并创建报告。",
-        icon: ShapesIcon,
-      },
-      {
-        suggestion: "学习",
-        prompt: "学习关于[主题]并创建教程。",
-        icon: GraduationCapIcon,
       },
     ],
     suggestionsCreate: [
@@ -172,8 +155,8 @@ export const zhCN: Translations = {
 
   // Sidebar
   sidebar: {
-    newChat: "新对话",
-    chats: "对话",
+    newChat: "创建新专利",
+    chats: "专利对话",
     recentChats: "最近的对话",
     demoChats: "演示对话",
     agents: "智能体",
@@ -209,13 +192,13 @@ export const zhCN: Translations = {
     save: "保存智能体",
     saving: "正在保存智能体...",
     saveRequested:
-      "已提交保存请求，DeepSeek 正在根据当前对话生成并保存初版智能体。",
+      "已提交保存请求，PatentPencil 正在根据当前对话生成并保存初版智能体。",
     saveHint:
       "你可以在右上角的菜单里随时保存这个智能体，就算目前还只是初稿也可以。",
     saveCommandMessage:
       "请现在根据我们目前已经讨论的全部内容保存这个自定义智能体。这就是我明确的保存确认。如果仍有少量细节缺失，请根据上下文做出合理假设，生成一份简洁的英文初始 SOUL.md，并直接调用 setup_agent，不要再向我索要额外确认。",
     agentCreatedPendingRefresh:
-      "智能体已创建，但 DeepSeek 暂时还无法读取到它。请稍后刷新当前页面。",
+      "智能体已创建，但 PatentPencil 暂时还无法读取到它。请稍后刷新当前页面。",
     more: "更多操作",
     agentCreated: "智能体已创建！",
     startChatting: "开始对话",
@@ -230,13 +213,13 @@ export const zhCN: Translations = {
 
   // Workspace
   workspace: {
-    officialWebsite: "访问 DeepSeek 官方网站",
-    githubTooltip: "访问 DeepSeek 的 Github 仓库",
+    officialWebsite: "访问 PatentPencil 官方网站",
+    githubTooltip: "访问 PatentPencil 的 Github 仓库",
     settingsAndMore: "设置和更多",
-    visitGithub: "在 Github 上查看 DeepSeek",
+    visitGithub: "在 Github 上查看 PatentPencil",
     reportIssue: "报告问题",
     contactUs: "联系我们",
-    about: "关于 DeepSeek",
+    about: "关于 PatentPencil",
     logout: "退出登录",
   },
 
@@ -253,7 +236,7 @@ export const zhCN: Translations = {
 
   // Page titles (document title)
   pages: {
-    appName: "DeepSeek",
+    appName: "PatentPencil",
     chats: "对话",
     newChat: "新对话",
     untitled: "未命名",
@@ -278,7 +261,7 @@ export const zhCN: Translations = {
     writeFile: "写入文件",
     clickToViewContent: "点击查看文件内容",
     writeTodos: "更新 To-do 列表",
-    skillInstallTooltip: "安装技能并使其可在 DeepSeek 中使用",
+    skillInstallTooltip: "安装技能并使其可在 PatentPencil 中使用",
   },
 
   uploads: {
@@ -335,7 +318,7 @@ export const zhCN: Translations = {
     noResults: "未找到结果。",
     actions: "操作",
     keyboardShortcuts: "键盘快捷键",
-    keyboardShortcutsDescription: "使用键盘快捷键更快地操作 DeepSeek。",
+    keyboardShortcutsDescription: "使用键盘快捷键更快地操作 PatentPencil。",
     openCommandPalette: "打开命令面板",
     toggleSidebar: "切换侧边栏",
   },
@@ -343,7 +326,7 @@ export const zhCN: Translations = {
   // Settings
   settings: {
     title: "设置",
-    description: "根据你的偏好调整 DeepSeek 的界面和行为。",
+    description: "根据你的偏好调整 PatentPencil 的界面和行为。",
     sections: {
       account: "账号",
       appearance: "外观",
@@ -356,7 +339,7 @@ export const zhCN: Translations = {
     memory: {
       title: "记忆",
       description:
-        "DeepSeek 会在后台不断从你的对话中自动学习。这些记忆能帮助 DeepSeek 更好地理解你，并提供更个性化的体验。",
+        "PatentPencil 会在后台不断从你的对话中自动学习。这些记忆能帮助 PatentPencil 更好地理解你，并提供更个性化的体验。",
       empty: "暂无可展示的记忆数据。",
       rawJson: "原始 JSON",
       exportButton: "导出记忆",
@@ -452,18 +435,18 @@ export const zhCN: Translations = {
       createSkill: "新建技能",
       emptyTitle: "还没有技能",
       emptyDescription:
-        "将你的 Agent Skill 文件夹放在 DeepSeek 根目录下的 `/skills/custom` 文件夹中。",
+        "将你的 Agent Skill 文件夹放在 PatentPencil 根目录下的 `/skills/custom` 文件夹中。",
       emptyButton: "创建你的第一个技能",
     },
     notification: {
       title: "通知",
       description:
-        "DeepSeek 只会在窗口不活跃时发送完成通知，特别适合长时间任务：你可以先去做别的事，完成后会收到提醒。",
+        "PatentPencil 只会在窗口不活跃时发送完成通知，特别适合长时间任务：你可以先去做别的事，完成后会收到提醒。",
       requestPermission: "请求通知权限",
       deniedHint:
         "通知权限已被拒绝。可在浏览器的网站设置中重新开启，以接收完成提醒。",
       testButton: "发送测试通知",
-      testTitle: "DeepSeek",
+      testTitle: "PatentPencil",
       testBody: "这是一条测试通知。",
       notSupported: "当前浏览器不支持通知功能。",
       disableNotification: "关闭通知",
@@ -489,6 +472,32 @@ export const zhCN: Translations = {
       emptyTitle: "致谢",
       emptyDescription: "相关的致谢信息会展示在这里。",
     },
+  },
+
+  // Auth
+  auth: {
+    loginTitle: "登录你的账号",
+    registerTitle: "创建一个新账号",
+    emailLabel: "邮箱",
+    emailPlaceholder: "you@example.com",
+    passwordLabel: "密码",
+    passwordPlaceholder: "请输入密码",
+    confirmPasswordLabel: "确认密码",
+    confirmPasswordPlaceholder: "请再次输入密码",
+    verificationCodeLabel: "验证码",
+    verificationCodePlaceholder: "6位验证码",
+    sendCode: "发送验证码",
+    sendCodeAgain: "重新发送",
+    resendIn: (seconds: number) => `${seconds}秒后重新发送`,
+    signInButton: "登录",
+    signUpButton: "注册",
+    loading: "请稍等...",
+    noAccount: "还没有账号？注册",
+    hasAccount: "已有账号？登录",
+    backToHome: "返回首页",
+    passwordsDoNotMatch: "两次输入的密码不一致",
+    codeSent: "验证码已发送，请查收邮箱。",
+    codeVerified: "验证码有效。",
   },
 
   // Billing

@@ -425,6 +425,32 @@ export interface Translations {
     };
   };
 
+  // Auth
+  auth: {
+    loginTitle: string;
+    registerTitle: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    passwordLabel: string;
+    passwordPlaceholder: string;
+    confirmPasswordLabel: string;
+    confirmPasswordPlaceholder: string;
+    verificationCodeLabel: string;
+    verificationCodePlaceholder: string;
+    sendCode: string;
+    sendCodeAgain: string;
+    resendIn: (seconds: number) => string;
+    signInButton: string;
+    signUpButton: string;
+    loading: string;
+    noAccount: string;
+    hasAccount: string;
+    backToHome: string;
+    passwordsDoNotMatch: string;
+    codeSent: string;
+    codeVerified: string;
+  };
+
   // Billing
   billing: {
     title: string;

@@ -29,6 +29,10 @@ export function buildLoginUrl(returnPath: string): string {
   return `/login?next=${encodeURIComponent(returnPath)}`;
 }
 
+export function buildRegisterUrl(returnPath: string): string {
+  return `/register?next=${encodeURIComponent(returnPath)}`;
+}
+
 // ── Backend error response parsing ────────────────────────────────
 
 const AUTH_ERROR_CODES = [
@@ -40,6 +44,11 @@ const AUTH_ERROR_CODES = [
   "provider_not_found",
   "not_authenticated",
   "system_already_initialized",
+  "verification_code_required",
+  "verification_code_expired",
+  "verification_code_invalid",
+  "verification_code_rate_limited",
+  "verification_code_send_failed",
 ] as const;
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[number];

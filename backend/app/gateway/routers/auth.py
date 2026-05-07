@@ -2,7 +2,11 @@
 
 import logging
 import os
+import random
+import smtplib
 import time
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from ipaddress import ip_address, ip_network
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -108,8 +112,29 @@ class RegisterRequest(BaseModel):
 
     email: EmailStr
     password: str = Field(..., min_length=8)
+    verification_code: str = Field(..., min_length=6, max_length=6)
 
     _strong_password = field_validator("password")(classmethod(lambda cls, v: _validate_strong_password(v)))
+
+
+class SendVerificationCodeRequest(BaseModel):
+    """Request model for sending email verification code."""
+
+    email: EmailStr
+
+
+class VerifyCodeRequest(BaseModel):
+    """Request model for verifying email verification code."""
+
+    email: EmailStr
+    code: str = Field(..., min_length=6, max_length=6)
+
+
+_VERIFICATION_CODE_EXPIRY_SECONDS = 300  # 5 minutes
+_VERIFICATION_CODE_COOLDOWN_SECONDS = 60  # 1 minute between sends
+
+# email → (code, expires_at, created_at)
+_verification_codes: dict[str, tuple[str, float, float]] = {}
 
 
 class ChangePasswordRequest(BaseModel):
@@ -269,6 +294,71 @@ def _record_login_success(ip: str) -> None:
     _login_attempts.pop(ip, None)
 
 
+# ── Verification Code Management ────────────────────────────────────────
+
+
+def _generate_verification_code() -> str:
+    """Generate a 6-digit numeric verification code."""
+    return f"{random.randint(100000, 999999)}"
+
+
+def _cleanup_expired_codes() -> None:
+    """Remove expired verification codes to bound memory usage."""
+    now = time.time()
+    expired = [email for email, (_, expires_at, _) in _verification_codes.items() if now > expires_at]
+    for email in expired:
+        del _verification_codes[email]
+
+
+def _send_verification_email(to_email: str, code: str) -> None:
+    """Send verification code via SMTP, or log it if SMTP is not configured."""
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = os.getenv("SMTP_PORT")
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_from = os.getenv("SMTP_FROM", smtp_user)
+
+    if not all([smtp_host, smtp_port, smtp_user, smtp_password]):
+        logger.info("[DEV MODE] Email verification code for %s: %s", to_email, code)
+        return
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "PatentPencil 验证码 / Verification Code"
+    msg["From"] = smtp_from
+    msg["To"] = to_email
+
+    text_part = MIMEText(
+        f"PatentPencil 验证码 / Verification Code: {code}\n\n"
+        f"您的验证码是 {code}，5 分钟内有效。如非本人操作，请忽略此邮件。\n"
+        f"Your verification code is {code}. It expires in 5 minutes. If you did not request this, please ignore.",
+        "plain",
+    )
+    html_part = MIMEText(
+        f'<html><body style="font-family:Arial,sans-serif">'
+        f'<h2>PatentPencil 验证码</h2>'
+        f'<p style="font-size:28px;font-weight:bold;color:#1a73e8;letter-spacing:4px">{code}</p>'
+        f'<p style="color:#666">您的验证码是 {code}，<b>5 分钟内有效</b>。如非本人操作，请忽略此邮件。</p>'
+        f'<hr style="border:1px solid #eee">'
+        f'<h2>Verification Code</h2>'
+        f'<p style="color:#666">Your verification code is <b>{code}</b>. It expires in <b>5 minutes</b>. If you did not request this, please ignore.</p>'
+        f"</body></html>",
+        "html",
+    )
+    msg.attach(text_part)
+    msg.attach(html_part)
+
+    port_int = int(smtp_port)
+    if port_int == 465:
+        with smtplib.SMTP_SSL(smtp_host, port_int) as server:
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+    else:
+        with smtplib.SMTP(smtp_host, port_int) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────
 
 
@@ -305,9 +395,33 @@ async def login_local(
 async def register(request: Request, response: Response, body: RegisterRequest):
     """Register a new user account (always 'user' role).
 
-    Admin is auto-created on first boot. This endpoint creates regular users.
-    Auto-login by setting the session cookie.
+    Requires a valid email verification code. Auto-login by setting the session cookie.
     """
+    # Validate verification code
+    code_record = _verification_codes.get(body.email)
+    if code_record is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=AuthErrorResponse(code=AuthErrorCode.VERIFICATION_CODE_REQUIRED, message="Please send a verification code first").model_dump(),
+        )
+
+    code, expires_at, _ = code_record
+    if time.time() > expires_at:
+        del _verification_codes[body.email]
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=AuthErrorResponse(code=AuthErrorCode.VERIFICATION_CODE_EXPIRED, message="Verification code has expired. Please request a new one").model_dump(),
+        )
+
+    if code != body.verification_code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=AuthErrorResponse(code=AuthErrorCode.VERIFICATION_CODE_INVALID, message="Invalid verification code").model_dump(),
+        )
+
+    # Code verified — consume it so it can't be reused
+    del _verification_codes[body.email]
+
     try:
         user = await get_local_provider().create_user(email=body.email, password=body.password, system_role="user")
     except ValueError:
@@ -320,6 +434,75 @@ async def register(request: Request, response: Response, body: RegisterRequest):
     _set_session_cookie(response, token, request)
 
     return UserResponse(id=str(user.id), email=user.email, system_role=user.system_role)
+
+
+@router.post("/send-verification-code", response_model=MessageResponse)
+async def send_verification_code(request: Request, body: SendVerificationCodeRequest):
+    """Send a 6-digit verification code to the given email address."""
+    provider = get_local_provider()
+    existing = await provider.get_user_by_email(body.email)
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=AuthErrorResponse(code=AuthErrorCode.EMAIL_ALREADY_EXISTS, message="Email already registered").model_dump(),
+        )
+
+    # Rate limiting: cooldown per email
+    code_record = _verification_codes.get(body.email)
+    if code_record:
+        _, _, created_at = code_record
+        if time.time() - created_at < _VERIFICATION_CODE_COOLDOWN_SECONDS:
+            remaining = int(_VERIFICATION_CODE_COOLDOWN_SECONDS - (time.time() - created_at))
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=AuthErrorResponse(code=AuthErrorCode.VERIFICATION_CODE_RATE_LIMITED, message=f"Please wait {remaining} seconds before requesting a new code").model_dump(),
+            )
+
+    code = _generate_verification_code()
+    expires_at = time.time() + _VERIFICATION_CODE_EXPIRY_SECONDS
+    _verification_codes[body.email] = (code, expires_at, time.time())
+
+    _cleanup_expired_codes()
+
+    try:
+        _send_verification_email(body.email, code)
+    except Exception:
+        logger.exception("Failed to send verification email to %s", body.email)
+        # Remove the code so user isn't stuck with an unsent code
+        _verification_codes.pop(body.email, None)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=AuthErrorResponse(code=AuthErrorCode.VERIFICATION_CODE_SEND_FAILED, message="Failed to send verification email. Please try again later.").model_dump(),
+        )
+
+    return MessageResponse(message="Verification code sent. Please check your email.")
+
+
+@router.post("/verify-code", response_model=MessageResponse)
+async def verify_code(body: VerifyCodeRequest):
+    """Verify if the provided code is valid for the given email."""
+    code_record = _verification_codes.get(body.email)
+    if code_record is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=AuthErrorResponse(code=AuthErrorCode.VERIFICATION_CODE_REQUIRED, message="Please send a verification code first").model_dump(),
+        )
+
+    code, expires_at, _ = code_record
+    if time.time() > expires_at:
+        del _verification_codes[body.email]
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=AuthErrorResponse(code=AuthErrorCode.VERIFICATION_CODE_EXPIRED, message="Verification code has expired. Please request a new one").model_dump(),
+        )
+
+    if code != body.code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=AuthErrorResponse(code=AuthErrorCode.VERIFICATION_CODE_INVALID, message="Invalid verification code").model_dump(),
+        )
+
+    return MessageResponse(message="Verification code is valid.")
 
 
 @router.post("/logout", response_model=MessageResponse)

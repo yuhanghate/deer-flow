@@ -1,10 +1,7 @@
 import {
   CompassIcon,
-  GraduationCapIcon,
   ImageIcon,
-  MicroscopeIcon,
   PenLineIcon,
-  ShapesIcon,
   SparklesIcon,
   VideoIcon,
 } from "lucide-react";
@@ -71,11 +68,11 @@ export const enUS: Translations = {
   welcome: {
     greeting: "Hello, again!",
     description:
-      "Welcome to  DeepSeek, an open source super agent. With built-in and custom skills, DeepSeek helps you search on the web, analyze data, and generate artifacts like slides, web pages and do almost anything.",
+      "Welcome to your PatentPencil. With built-in skills for disclosure parsing, claims generation, and feature extraction, it efficiently guides you through the entire patent drafting workflow—from disclosure organization to claims layout.",
 
     createYourOwnSkill: "Create Your Own Skill",
     createYourOwnSkillDescription:
-      "Create your own skill to release the power of DeepSeek. With customized skills,\nDeepSeek can help you search on the web, analyze data, and generate\n artifacts like slides, web pages and do almost anything.",
+      "Create your own skill to release the power of PatentPencil. With customized skills,\nPatentPencil can help you search on the web, analyze data, and generate\n artifacts like slides, web pages and do almost anything.",
   },
 
   // Clipboard
@@ -127,25 +124,10 @@ export const enUS: Translations = {
     followupConfirmReplace: "Replace & send",
     suggestions: [
       {
-        suggestion: "Write",
-        prompt: "Write a blog post about the latest trends on [topic]",
-        icon: PenLineIcon,
-      },
-      {
-        suggestion: "Research",
+        suggestion: "Disclosure to Patent",
         prompt:
-          "Conduct a deep dive research on [topic], and summarize the findings.",
-        icon: MicroscopeIcon,
-      },
-      {
-        suggestion: "Collect",
-        prompt: "Collect data from [source] and create a report.",
-        icon: ShapesIcon,
-      },
-      {
-        suggestion: "Learn",
-        prompt: "Learn about [topic] and create a tutorial.",
-        icon: GraduationCapIcon,
+          "Based on the invention disclosure document I upload, please generate a complete patent application (Word format), including technical field, background, summary of invention, brief description of drawings, and detailed embodiments.",
+        icon: PenLineIcon,
       },
     ],
     suggestionsCreate: [
@@ -178,8 +160,8 @@ export const enUS: Translations = {
 
   // Sidebar
   sidebar: {
-    newChat: "New chat",
-    chats: "Chats",
+    newChat: "New Patent",
+    chats: "Patent Chats",
     recentChats: "Recent chats",
     demoChats: "Demo chats",
     agents: "Agents",
@@ -221,13 +203,13 @@ export const enUS: Translations = {
     save: "Save agent",
     saving: "Saving agent...",
     saveRequested:
-      "Save requested. DeepSeek is generating and saving an initial version now.",
+      "Save requested. PatentPencil is generating and saving an initial version now.",
     saveHint:
       "You can save this agent at any time from the top-right menu, even if this is only a first draft.",
     saveCommandMessage:
       "Please save this custom agent now based on everything we have discussed so far. Treat this as my explicit confirmation to save. If some details are still missing, make reasonable assumptions, generate a concise first SOUL.md in English, and call setup_agent immediately without asking me for more confirmation.",
     agentCreatedPendingRefresh:
-      "The agent was created, but DeepSeek could not load it yet. Please refresh this page in a moment.",
+      "The agent was created, but PatentPencil could not load it yet. Please refresh this page in a moment.",
     more: "More actions",
     agentCreated: "Agent created!",
     startChatting: "Start chatting",
@@ -242,13 +224,13 @@ export const enUS: Translations = {
 
   // Workspace
   workspace: {
-    officialWebsite: "DeepSeek's official website",
-    githubTooltip: "DeepSeek on Github",
+    officialWebsite: "PatentPencil's official website",
+    githubTooltip: "PatentPencil on Github",
     settingsAndMore: "Settings and more",
-    visitGithub: "DeepSeek on GitHub",
+    visitGithub: "PatentPencil on GitHub",
     reportIssue: "Report a issue",
     contactUs: "Contact us",
-    about: "About DeepSeek",
+    about: "About PatentPencil",
     logout: "Log out",
   },
 
@@ -265,7 +247,7 @@ export const enUS: Translations = {
 
   // Page titles (document title)
   pages: {
-    appName: "DeepSeek",
+    appName: "PatentPencil",
     chats: "Chats",
     newChat: "New chat",
     untitled: "Untitled",
@@ -291,7 +273,7 @@ export const enUS: Translations = {
     writeFile: "Write file",
     clickToViewContent: "Click to view file content",
     writeTodos: "Update to-do list",
-    skillInstallTooltip: "Install skill and make it available to DeepSeek",
+    skillInstallTooltip: "Install skill and make it available to PatentPencil",
   },
 
   // Subtasks
@@ -351,7 +333,7 @@ export const enUS: Translations = {
     actions: "Actions",
     keyboardShortcuts: "Keyboard Shortcuts",
     keyboardShortcutsDescription:
-      "Navigate DeepSeek faster with keyboard shortcuts.",
+      "Navigate PatentPencil faster with keyboard shortcuts.",
     openCommandPalette: "Open Command Palette",
     toggleSidebar: "Toggle Sidebar",
   },
@@ -359,7 +341,7 @@ export const enUS: Translations = {
   // Settings
   settings: {
     title: "Settings",
-    description: "Adjust how DeepSeek looks and behaves for you.",
+    description: "Adjust how PatentPencil looks and behaves for you.",
     sections: {
       account: "Account",
       appearance: "Appearance",
@@ -372,7 +354,7 @@ export const enUS: Translations = {
     memory: {
       title: "Memory",
       description:
-        "DeepSeek automatically learns from your conversations in the background. These memories help DeepSeek understand you better and deliver a more personalized experience.",
+        "PatentPencil automatically learns from your conversations in the background. These memories help PatentPencil understand you better and deliver a more personalized experience.",
       empty: "No memory data to display.",
       rawJson: "Raw JSON",
       exportButton: "Export memory",
@@ -472,18 +454,18 @@ export const enUS: Translations = {
       createSkill: "Create skill",
       emptyTitle: "No agent skill yet",
       emptyDescription:
-        "Put your agent skill folders under the `/skills/custom` folder under the root folder of DeepSeek.",
+        "Put your agent skill folders under the `/skills/custom` folder under the root folder of PatentPencil.",
       emptyButton: "Create Your First Skill",
     },
     notification: {
       title: "Notification",
       description:
-        "DeepSeek only sends a completion notification when the window is not active. This is especially useful for long-running tasks so you can switch to other work and get notified when done.",
+        "PatentPencil only sends a completion notification when the window is not active. This is especially useful for long-running tasks so you can switch to other work and get notified when done.",
       requestPermission: "Request notification permission",
       deniedHint:
         "Notification permission was denied. You can enable it in your browser's site settings to receive completion alerts.",
       testButton: "Send test notification",
-      testTitle: "DeepSeek",
+      testTitle: "PatentPencil",
       testBody: "This is a test notification.",
       notSupported: "Your browser does not support notifications.",
       disableNotification: "Disable notification",
@@ -511,6 +493,32 @@ export const enUS: Translations = {
     },
   },
 
+  // Auth
+  auth: {
+    loginTitle: "Sign in to your account",
+    registerTitle: "Create a new account",
+    emailLabel: "Email",
+    emailPlaceholder: "you@example.com",
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter your password",
+    confirmPasswordLabel: "Confirm Password",
+    confirmPasswordPlaceholder: "Confirm your password",
+    verificationCodeLabel: "Verification Code",
+    verificationCodePlaceholder: "6-digit code",
+    sendCode: "Send Code",
+    sendCodeAgain: "Send Again",
+    resendIn: (seconds: number) => `Resend in ${seconds}s`,
+    signInButton: "Sign In",
+    signUpButton: "Sign Up",
+    loading: "Please wait...",
+    noAccount: "Don't have an account? Sign up",
+    hasAccount: "Already have an account? Sign in",
+    backToHome: "Back to home",
+    passwordsDoNotMatch: "Passwords do not match",
+    codeSent: "Verification code sent. Please check your email.",
+    codeVerified: "Verification code is valid.",
+  },
+
   // Billing
   billing: {
     title: "Billing & Quota",
@@ -530,10 +538,12 @@ export const enUS: Translations = {
     recharge: "Recharge",
     price: "Price",
     buyNow: "Buy Now",
-    purchaseSuccess: "Purchase successful! Tokens have been credited to your account.",
+    purchaseSuccess:
+      "Purchase successful! Tokens have been credited to your account.",
     purchaseFailed: "Purchase failed, please try again.",
     quotaExhausted: "Token Quota Exhausted",
-    quotaExhaustedMessage: "Your free token quota has been used up. Please upgrade to continue using the service.",
+    quotaExhaustedMessage:
+      "Your free token quota has been used up. Please upgrade to continue using the service.",
     plans: {
       title: "Choose Your Plan",
       description: "Select a token quota plan that fits your needs.",

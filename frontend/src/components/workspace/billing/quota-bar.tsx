@@ -48,7 +48,7 @@ export function QuotaBar({ refreshTrigger }: QuotaBarProps) {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="text-muted-foreground hover:bg-accent flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-xs transition-colors"
+          className="text-foreground/70 hover:bg-secondary hover:text-foreground flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-xs transition-colors"
         >
           <CoinsIcon size={14} />
           <span className="whitespace-nowrap">

@@ -6,7 +6,6 @@ import {
   GraduationCapIcon,
   LightbulbIcon,
   PaperclipIcon,
-  PlusIcon,
   SparklesIcon,
   RocketIcon,
   XIcon,
@@ -923,30 +922,6 @@ function SuggestionList() {
           onClick={() => handleSuggestionClick(suggestion.prompt)}
         />
       ))}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Suggestion icon={PlusIcon} suggestion={t.common.create} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuGroup>
-            {t.inputBox.suggestionsCreate.map((suggestion, index) =>
-              "type" in suggestion && suggestion.type === "separator" ? (
-                <DropdownMenuSeparator key={index} />
-              ) : (
-                !("type" in suggestion) && (
-                  <DropdownMenuItem
-                    key={suggestion.suggestion}
-                    onClick={() => handleSuggestionClick(suggestion.prompt)}
-                  >
-                    {suggestion.icon && <suggestion.icon className="size-4" />}
-                    {suggestion.suggestion}
-                  </DropdownMenuItem>
-                )
-              ),
-            )}
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </Suggestions>
   );
 }

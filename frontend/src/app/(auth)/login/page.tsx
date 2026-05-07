@@ -52,7 +52,6 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -93,22 +92,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const endpoint = isLogin
-        ? "/api/v1/auth/login/local"
-        : "/api/v1/auth/register";
-      const body = isLogin
-        ? `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
-        : JSON.stringify({ email, password });
+      const body = `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
 
-      const headers: HeadersInit = isLogin
-        ? { "Content-Type": "application/x-www-form-urlencoded" }
-        : { "Content-Type": "application/json" };
-
-      const res = await fetch(endpoint, {
+      const res = await fetch("/api/v1/auth/login/local", {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body,
-        credentials: "include", // Important: include HttpOnly cookie
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -118,7 +108,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Both login and register set a cookie — redirect to workspace
       router.push(redirectPath);
     } catch {
       setError("Network error. Please try again.");
@@ -132,7 +121,7 @@ export default function LoginPage() {
   return (
     <div className="bg-background flex min-h-screen items-center justify-center">
       <FlickeringGrid
-        className="absolute inset-0 z-0 mask-[url(/images/deer.svg)] mask-size-[100vw] mask-center mask-no-repeat md:mask-size-[72vh]"
+        className="absolute inset-0 z-0 hidden mask-[url(/images/deer.svg)] mask-size-[100vw] mask-center mask-no-repeat md:mask-size-[72vh]"
         squareSize={4}
         gridGap={4}
         color={actualTheme === "dark" ? "white" : "black"}
@@ -141,10 +130,8 @@ export default function LoginPage() {
       />
       <div className="border-border/20 bg-background/5 w-full max-w-md space-y-6 rounded-3xl border p-8 backdrop-blur-sm">
         <div className="text-center">
-          <h1 className="text-foreground font-serif text-3xl">DeerFlow</h1>
-          <p className="text-muted-foreground mt-2">
-            {isLogin ? "Sign in to your account" : "Create a new account"}
-          </p>
+          <h1 className="text-foreground font-serif text-3xl">PatentPencil</h1>
+          <p className="text-muted-foreground mt-2">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-2">
@@ -172,37 +159,23 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="•••••••"
               required
-              minLength={isLogin ? 6 : 8}
             />
           </div>
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading
-              ? "Please wait..."
-              : isLogin
-                ? "Sign In"
-                : "Create Account"}
+            {loading ? "Please wait..." : "Sign In"}
           </Button>
         </form>
 
         <div className="text-center text-sm">
-          <button
-            type="button"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError("");
-            }}
-            className="text-blue-500 hover:underline"
-          >
-            {isLogin
-              ? "Don't have an account? Sign up"
-              : "Already have an account? Sign in"}
-          </button>
+          <Link href="/register" className="text-blue-500 hover:underline">
+            Don&apos;t have an account? Sign up
+          </Link>
         </div>
 
-        <div className="text-muted-foreground text-center text-xs">
+        <div className="text-muted-foreground hidden text-center text-xs">
           <Link href="/" className="hover:underline">
             ← Back to home
           </Link>
