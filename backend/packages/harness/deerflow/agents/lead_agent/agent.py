@@ -313,7 +313,6 @@ def _build_middlewares(
     else:
         logger.warning("InternalReferenceRedactionMiddleware unavailable; skipping redaction middleware.")
 
-
     # Inject custom middlewares before ClarificationMiddleware
     if custom_middlewares:
         middlewares.extend(custom_middlewares)
