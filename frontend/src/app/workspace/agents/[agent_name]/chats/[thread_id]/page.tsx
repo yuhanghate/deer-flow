@@ -197,7 +197,7 @@ export default function AgentChatPage() {
 
                 <InputBox
                   className={cn("bg-background/5 w-full -translate-y-4")}
-                  isNewThread={isNewThread}
+                  isWelcomeMode={isNewThread}
                   threadId={threadId}
                   autoFocus={isNewThread}
                   status={
