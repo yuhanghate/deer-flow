@@ -68,7 +68,7 @@ export const zhCN: Translations = {
   welcome: {
     greeting: "你好，欢迎回来！",
     description:
-      "欢迎使用 专利撰写助手。内置专利交底书解析、权利要求生成、技术特征提取等专属技能，\n高效辅助您完成专利撰写全流程，从交底书整理到权利要求布局，让专利撰写更轻松。",
+      "欢迎使用 我爱写专利。内置专利交底书解析、权利要求生成、技术特征提取等专属技能，\n高效辅助您完成专利撰写全流程，从交底书整理到权利要求布局，让专利撰写更轻松。",
 
     createYourOwnSkill: "创建你自己的 Agent SKill",
     createYourOwnSkillDescription:
