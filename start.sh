@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# 后台启动 DeerFlow（nginx 对外监听 2026）。
+# 后台启动 DeerFlow（nginx 对外监听 8100）。
 # 用法: ./start.sh
 # 日志: logs/{langgraph,gateway,frontend,nginx}.log
 # 停止: ./stop.sh
