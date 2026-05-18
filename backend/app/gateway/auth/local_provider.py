@@ -3,9 +3,11 @@
 import logging
 
 from app.gateway.auth.models import User
-from app.gateway.auth.password import hash_password_async, needs_rehash, verify_password_async
 from app.gateway.auth.providers import AuthProvider
 from app.gateway.auth.repositories.base import UserRepository
+
+# TODO: 临时注释，改为明文存储后可移除
+# from app.gateway.auth.password import hash_password_async, needs_rehash, verify_password_async
 
 logger = logging.getLogger(__name__)
 
@@ -44,17 +46,21 @@ class LocalAuthProvider(AuthProvider):
             # OAuth user without local password
             return None
 
-        if not await verify_password_async(password, user.password_hash):
+        # TODO: 改为明文比对（临时需求）
+        if password != user.password_hash:
             return None
 
-        if needs_rehash(user.password_hash):
-            try:
-                user.password_hash = await hash_password_async(password)
-                await self._repo.update_user(user)
-            except Exception:
-                # Rehash is an opportunistic upgrade; a transient DB error must not
-                # prevent an otherwise-valid login from succeeding.
-                logger.warning("Failed to rehash password for user %s; login will still succeed", user.email, exc_info=True)
+        # if not await verify_password_async(password, user.password_hash):
+        #     return None
+        #
+        # if needs_rehash(user.password_hash):
+        #     try:
+        #         user.password_hash = await hash_password_async(password)
+        #         await self._repo.update_user(user)
+        #     except Exception:
+        #         # Rehash is an opportunistic upgrade; a transient DB error must not
+        #         # prevent an otherwise-valid login from succeeding.
+        #         logger.warning("Failed to rehash password for user %s; login will still succeed", user.email, exc_info=True)
 
         return user
 
@@ -74,7 +80,9 @@ class LocalAuthProvider(AuthProvider):
         Returns:
             Created User instance
         """
-        password_hash = await hash_password_async(password) if password else None
+        # TODO: 直接存明文（临时需求）
+        password_hash = password if password else None
+        # password_hash = await hash_password_async(password) if password else None
         user = User(
             email=email,
             password_hash=password_hash,
