@@ -153,7 +153,7 @@ export default function RegisterPage() {
   return (
     <div className="bg-background flex min-h-screen items-center justify-center">
       <FlickeringGrid
-        className="absolute inset-0 z-0 hidden mask-[url(/images/deer.svg)] mask-size-[100vw] mask-center mask-no-repeat md:mask-size-[72vh]"
+        className="absolute inset-0 z-0 hidden"
         squareSize={4}
         gridGap={4}
         color={actualTheme === "dark" ? "white" : "black"}
